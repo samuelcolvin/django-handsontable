@@ -1,0 +1,7 @@
+.handsontable td{
+	max-width: 200px;
+}
+
+.handsontable .large_item{
+	max-height: 82px;
+}
