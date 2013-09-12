@@ -5,38 +5,18 @@ var big_fields = ['description', 'comment'];
 
 $(document).ready(function() {
 	$container.handsontable({
-		colHeaders : ['ID', 'name', 'description', 'comment', 'order group'],
-		columns : [
-			{
-				data : 'id', 
-				readOnly: true
-			}, 
-			{
-				data : 'name'
-			}, 
-			{
-				data : 'description', 
-				type : {renderer : long_renderer}
-			},
-			{
-				data : 'comment', 
-				type : {renderer : long_renderer}
-			}, 
-			{
-				data : 'order_group',
-			    type: {renderer: foreign_key_renderer, editor: Handsontable.AutocompleteEditor},
-			    source: ["BMW", "Chrysler", "Nissan", "Suzuki", "Toyota", "Volvo", ""],
-			    strict: true
-			}, 
-		],
-		// contextMenu : true,
+		colHeaders : column_names,
+		columns : columns,
+		contextMenu : true,
 		afterChange : autosave_data,
+		minSpareRows: 20,
 	});
 	handsontable = $container.data('handsontable');
 	load_data();
+	$container.show();
 }); 
 
-
+$container.hide();
 $('#loadbtn').click(load_data);
 
 $('#savebtn').click(save_data);
@@ -49,20 +29,24 @@ $('#autosavecheckbox').click(function() {
 	}
 });
 
-function load_data() {
-	$.ajax({
-		url : "/restful/components.json",
-		dataType : 'json',
-		type : 'GET',
-		success : function(data) {
-			handsontable.loadData(data);
-			$console.text('Data loaded');
-			$container.show();
-		}
-	});
-}
+function generate_column_info(item){
+	var info = {};
+	info.data = item.name;
+	if (item.name == 'id'){
+		info.readOnly = true;
+	}
+	if (item.type == 'long'){
+		info.type = {renderer : long_renderer};
+	}
+	else if (item.type == 'foreign_key'){
+		info.type = {renderer: foreign_key_renderer, editor: Handsontable.AutocompleteEditor};
+		info.source = extra_models[item.model];
+		info.strict = true;
+	}
+	return info;
+} 
 
-var long_renderer = function (instance, td, row, col, prop, value, cellProperties) {
+function long_renderer(instance, td, row, col, prop, value, cellProperties) {
   var value = Handsontable.helper.stringify(value);
   td.innerHTML = '<div class="large_item">' + value + '</div>';
   return td;
@@ -72,6 +56,19 @@ function foreign_key_renderer(instance, td, row, col, prop, value, cellPropertie
   Handsontable.AutocompleteCell.renderer.apply(this, arguments);
   // td.style.fontStyle = 'italic';
   td.title = 'Type to show the list of options';
+}
+
+function load_data() {
+	$.ajax({
+		url : main_json_url,
+		dataType : 'json',
+		type : 'GET',
+		success : function(data) {
+			handsontable.loadData(data);
+			$console.text('Data loaded');
+			$container.show();
+		}
+	});
 }
 
 function save_data() {
@@ -116,3 +113,8 @@ function autosave_data(change, source) {
 		});
 	}
 }
+
+
+
+var columns = column_info.map(generate_column_info);
+var column_names = column_info.map(function(item){ return item.header;});

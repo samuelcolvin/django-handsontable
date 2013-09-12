@@ -1,0 +1,39 @@
+{% extends "page_base.html" %}
+
+{% block extra_css %}
+{% load staticfiles %}
+{% if debug %}
+<link rel="stylesheet" href="{% static "css/jquery.handsontable.full.css" %}">
+{% else %}
+<link rel="stylesheet" href="{% static "css/jquery.handsontable.css" %}">
+{% endif %}
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+{% endblock %}
+
+{% block maincol_content %}
+
+<p style="margin: 100px 0px 20px">
+	<button id="loadbtn" class="btn btn-default">Load</button>
+	<button save="savebtn" class="btn btn-default">Save</button>
+    <label><input id="autosavecheckbox" type="checkbox" name="autosave" checked="checked">Autosave</label>
+</p>
+<div id="hands-table" class="handsontable"></div>
+<pre id="table-console" style="margin: 50px 0px">Click "Load" to load data from server</pre>
+<p>url: {{main_json_url}}</p>
+<script>
+	var column_info = {{column_json|safe}};
+	var extra_models = {{extra_models_json|safe}};
+	var main_json_url = '{{main_json_url}}';
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% if debug %}
+<script src="{% static "js/jquery.dotdotdot.js" %}"></script>
+<script src="{% static "js/jquery.handsontable.full.js" %}"></script>
+{% else %}
+<script src="{% static "js/jquery.dotdotdot.min.js" %}"></script>
+<script src="{% static "js/jquery.handsontable.js" %}"></script>
+{% endif %}
+<script src="{% static "js/hands_display.js" %}?"></script>
+{% endblock %}

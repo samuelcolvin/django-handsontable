@@ -14,8 +14,11 @@ class IDNameSerialiser(serializers.RelatedField):
         return '%d: %s' % (item.id, item.name)
     
     def from_native(self, data):
-        return self._model.objects.get(id = int(data[:data.index(':')]))
-
+        try:
+            id = int(data)
+        except:
+            id = int(data[:data.index(':')])
+        return self._model.objects.get(id = id)
 
 def get_display_apps():
     display_modules = map(lambda m: __import__(m + '.display'), settings.DISPLAY_APPS)
@@ -24,13 +27,25 @@ def get_display_apps():
         apps[dm.__name__] = {}
         for ob_name in dir(dm.display):
             ob = getattr(dm.display, ob_name)
-            if inherits_from(ob, BaseDisplayModel):
+            if inherits_from(ob, 'BaseDisplayModel'):
                 apps[dm.__name__][ob_name] = _process_display(dm, ob_name)
     return apps
 
-def inherits_from(child, parent):
-    return inspect.isclass(child) and inspect.isclass(parent) \
-         and issubclass(child, parent) and not child is parent
+def get_rest_apps():
+    display_apps = get_display_apps()
+    for app_name in display_apps.keys():
+        for model_name in display_apps[app_name].keys():
+            if not hasattr(display_apps[app_name][model_name], 'Serializer'):
+                del display_apps[app_name][model_name]
+        if len(display_apps[app_name]) == 0:
+            del display_apps[app_name]
+    return display_apps
+
+def inherits_from(child, parent_name):
+    if inspect.isclass(child):
+        if parent_name in [c.__name__ for c in inspect.getmro(child)[1:]]:
+            return True
+    return False
                     
 def _process_display(dm, ob_name):
     if not hasattr(dm.models, ob_name):
