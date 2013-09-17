@@ -1,0 +1,48 @@
+.handsontable td {
+	max-width: 200px;
+	padding-left: 10px  !important;
+	padding-right: 20px  !important;
+}
+
+.handsontable .large_item {
+	max-height: 82px;
+}
+
+#log pre {
+	outline: 1px solid #ccc;
+	padding: 5px;
+	margin: 5px;
+}
+
+#log .string {
+	color: black;
+}
+
+#log .number {
+	color: red;
+}
+
+#log .boolean {
+	color: blue;
+}
+
+#log .null {
+	color: magenta;
+}
+
+#log .key {
+	color: grey;
+}
+
+.padded-row {
+	margin-bottom: 20px;
+}
+
+.error-cell {
+	background-color: #f66 !important;
+}
+
+#error {
+	max-height: 100px;
+	overflow: auto;
+}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% block extra_js %}
+<script src="{% static "js/offcanvas.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+{% if request.user.is_authenticated %}    
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+        {% for item in top_menu %}<span class="icon-bar"></span>{% endfor %}
+      </button>
+      <a class="navbar-brand" href="{% url "index" %}">{{site_title}}</a>
+    </div>
+    <div class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        {% for item in top_menu %}
+		<li class="{{item.class}}"><a href="{{item.url}}">{{item.name}}</a></li>
+		{% endfor %}
+      </ul>
+    </div><!--/.navbar-collapse -->
+  </div>
+</div>
+<div class="container main-container">
+  <div class="row row-offcanvas row-offcanvas-right">
+    <div class="col-xs-12 {% block extra_maincol_classes %}{% endblock %}">
+      {% block top_of_page %}{% endblock %}
+		{% if crums %}
+			<ol class="breadcrumb">
+				{% for item in crums %}
+				{% if forloop.last %}
+					<li class="active">{{item.name}}</li>
+				{% else %}
+					<li><a href="{{item.url}}">{{item.name}}</a></li>
+				{% endif %}
+				{% endfor %}
+			</ol>
+		{% endif %}
+		{% if info %}<div class="alert alert-info">{{info|safe}}</div>{% endif %}
+		{% if success %}<div class="alert alert-success">{{success|safe}}</div>{% endif %}
+		{% if error %}<div class="alert alert-danger">{{error|safe}}</div>{% endif %}
+		{% if page_menu %}
+		<div id="page-menu">
+			<p>
+				{% for item in page_menu %}
+					{% if item.url %}<a href="{{item.url}}" class="btn btn-default">{{item.name}}</a>
+					{% elif item.onclick %}<button type="button" class="btn btn-default" onclick="{{item.onclick}}">{{item.name}}</button>
+					{% endif %}
+				{% endfor %}
+			</p>
+		</div>
+		{% endif %}
+		{% if message %}
+			<div id="message">
+				{{message|safe}}
+			</div>
+		{% endif %}
+		{% block maincol_content %}{% endblock %}
+	</div> <!-- main col-->
+	
+	{% block below_maincol %}{% endblock %}
+  </div> <!-- main row-->
+</div>
+{% else %}
+		<meta http-equiv="REFRESH" content="0;url={% url "login" %}">
+{% endif %}
+{% endblock content %}

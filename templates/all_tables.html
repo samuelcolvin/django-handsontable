@@ -1,0 +1,8 @@
+{% extends "page_base.html" %}
+
+{% block maincol_content %}
+
+{% for table in tables %}
+<p><a href="{{table.url}}">{{table.name}}</a></p>
+{% endfor %}
+{% endblock %}

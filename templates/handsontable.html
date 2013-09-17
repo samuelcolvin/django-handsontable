@@ -7,19 +7,29 @@
 {% else %}
 <link rel="stylesheet" href="{% static "css/jquery.handsontable.css" %}">
 {% endif %}
-<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/jquery.handsontable.removeRow.css" %}">
+<link rel="stylesheet" href="{% static "css/table-style.css" %}">
 {% endblock %}
 
 {% block maincol_content %}
 
-<p style="margin: 100px 0px 20px">
-	<button id="loadbtn" class="btn btn-default">Load</button>
-	<button save="savebtn" class="btn btn-default">Save</button>
-    <label><input id="autosavecheckbox" type="checkbox" name="autosave" checked="checked">Autosave</label>
-</p>
-<div id="hands-table" class="handsontable"></div>
-<pre id="table-console" style="margin: 50px 0px">Click "Load" to load data from server</pre>
-<p>url: {{main_json_url}}</p>
+<div class="row" style="min-height: 75px;">
+	<div id="message" class="alert alert-info" style="display: none;"></div>
+	<pre id="error" class="alert alert-danger" style="display: none;"></pre>
+</div>
+<div class="row padded-row">
+  <button id="savebtn" class="btn btn-default">Save</button>
+   	
+  <div class="checkbox">
+    <label>
+      <input id="autosavecheckbox" type="checkbox" checked="checked"> Autosave
+    </label>
+  </div>
+</div>
+<div class="row padded-row">
+	<div id="the-table" class="handsontable" style="display: none;"></div>
+
+{% csrf_token %}
 <script>
 	var column_info = {{column_json|safe}};
 	var extra_models = {{extra_models_json|safe}};
@@ -29,11 +39,14 @@
 
 {% block extra_js %}
 {% if debug %}
-<script src="{% static "js/jquery.dotdotdot.js" %}"></script>
-<script src="{% static "js/jquery.handsontable.full.js" %}"></script>
+<script src="{% static "js/lib/lodash.js" %}"></script>
+<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
+<script src="{% static "js/lib/bootbox.js" %}"></script>
 {% else %}
-<script src="{% static "js/jquery.dotdotdot.min.js" %}"></script>
-<script src="{% static "js/jquery.handsontable.js" %}"></script>
+<script src="{% static "js/lib/lodash.min.js" %}"></script>
+<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
+<script src="{% static "js/lib/bootbox.min.js" %}"></script>
 {% endif %}
-<script src="{% static "js/hands_display.js" %}?"></script>
+<script src="{% static "js/lib/jquery.handsontable.removeRow.js" %}"></script>
+<script src="{% static "js/handsontable_display.js" %}?"></script>
 {% endblock %}

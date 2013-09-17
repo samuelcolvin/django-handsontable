@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock title %}
+
+{% load staticfiles %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static "login_styles.css" %}?">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container">
+	<form method="post" class="form-signin">
+		<h2 class="form-signin-heading">Login</h2>
+		{% load bootstrap3 %}
+		{% csrf_token %}
+		{% bootstrap_form form %}
+		{% bootstrap_form_buttons %}
+	    <button class="btn btn-lg btn-primary btn-block" type="submit">login</button>
+		{% end_bootstrap_form_buttons %}
+	</form>
+</div> <!-- /container -->
+{% endblock content %}

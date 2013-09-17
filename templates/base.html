@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>{{title}}</title>
+		{% load staticfiles %}
+		<link rel="icon" type="image/png" href="{% static "favicon.png" %}" />
+		{% if debug %}
+		<link rel="stylesheet" href="{% static "bootstrap.css" %}">
+		<link rel="stylesheet" href="{% static "bootstrap-theme.css" %}">
+		{% else %}
+		<link rel="stylesheet" href="{% static "bootstrap.min.css" %}">
+		<link rel="stylesheet" href="{% static "bootstrap-theme.min.css" %}">
+		{% endif %}
+		<link rel="stylesheet" href="{% static "style.css" %}?">
+		{% block extra_css %}{% endblock %}
+	</head>
+	<body>
+		{% block content %}{% endblock %}
+		{% if debug %}
+		<script src="{% static "js/lib/jquery-1.10.2.js" %}"></script>
+		<script src="{% static "js/lib/bootstrap.js" %}"></script>
+		{% else %}
+		<script src="{% static "js/lib/jquery-1.10.2.min.js" %}"></script>
+		<script src="{% static "js/lib/bootstrap.min.js" %}"></script>
+		{% endif %}
+		{% block extra_js %}{% endblock %}
+	</body>
+</html>
