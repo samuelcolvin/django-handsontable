@@ -1,7 +1,6 @@
 import HotDjango.rest_views as rest_views
-from rest_framework.routers import DefaultRouter
 
-router = DefaultRouter(trailing_slash=False)
-for prefix, modelviewset in rest_views.generate_viewsets():
-    router.register(prefix, modelviewset, 'rest-' + prefix)
+router = rest_views.ManyEnabledRouter(trailing_slash=False)
+for view in rest_views.generate_viewsets():
+    router.register(*view)
 urlpatterns = router.urls

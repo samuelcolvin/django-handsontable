@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import inspect, settings
+from rest_framework import serializers
 
 class BaseDisplayModel:
     pass
@@ -20,6 +21,11 @@ class IDNameSerialiser(serializers.RelatedField):
             id = int(data[:data.index(':')])
         return self._model.objects.get(id = id)
 
+class Serialiser(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('many', True)
+        super(Serialiser, self).__init__(*args, **kwargs)
+
 def get_display_apps():
     display_modules = map(lambda m: __import__(m + '.display'), settings.DISPLAY_APPS)
     apps={}
@@ -33,12 +39,12 @@ def get_display_apps():
 
 def get_rest_apps():
     display_apps = get_display_apps()
-    for app_name in display_apps.keys():
-        for model_name in display_apps[app_name].keys():
-            if not hasattr(display_apps[app_name][model_name], 'Serializer'):
-                del display_apps[app_name][model_name]
-        if len(display_apps[app_name]) == 0:
-            del display_apps[app_name]
+    for disp_app in display_apps.values():
+        for model_name in disp_app.keys():
+            if not hasattr(disp_app[model_name], 'Serializer'):
+                del disp_app[model_name]
+        if len(disp_app) == 0:
+            del disp_app
     return display_apps
 
 def inherits_from(child, parent_name):
