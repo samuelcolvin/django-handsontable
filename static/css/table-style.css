@@ -46,3 +46,36 @@
 	max-height: 100px;
 	overflow: auto;
 }
+
+.big-modal{
+	width: 900px !important;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow, .handsontable.htCallFunc th.htCallFunc {
+  text-align: right;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow .btn, .handsontable.htCallFunc th.htCallFunc .btn {
+  background-color: #428bca;
+  border-radius: 9px;
+  padding: 0 6px 0 6px;
+  color: #FFF;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  display: none;
+  margin: 0 auto;
+  width: 20px;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow .btn:hover, .handsontable.htCallFunc th.htCallFunc .btn:hover {
+  background-color: #3071a9;
+}
+
+.handsontable .htCallFunc + th, .handsontable .htRemoveRow + th{
+	border-width: 0px;
+}
+
+.table-modal{
+	height: 500px;
+}

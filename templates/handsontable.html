@@ -7,27 +7,57 @@
 {% else %}
 <link rel="stylesheet" href="{% static "css/jquery.handsontable.css" %}">
 {% endif %}
-<link rel="stylesheet" href="{% static "css/jquery.handsontable.removeRow.css" %}">
 <link rel="stylesheet" href="{% static "css/table-style.css" %}">
 {% endblock %}
 
 {% block maincol_content %}
 
-<div class="row" style="min-height: 75px;">
-	<div id="message" class="alert alert-info" style="display: none;"></div>
-	<pre id="error" class="alert alert-danger" style="display: none;"></pre>
+<div class="col-xs-12">
+	<div class="row" style="min-height: 75px;">
+		<div id="message" class="alert alert-info" style="display: none;"></div>
+		<pre id="error" class="alert alert-danger" style="display: none;"></pre>
+	</div>
+	<div class="row padded-row">
+		<div id="the-table" class="handsontable" style="display: none;"></div>
+	</div>
+	<div class="row padded-row">
+	  <button id="savebtn" class="btn btn-default">Save</button>
+	</div>
 </div>
-<div class="row padded-row">
-  <button id="savebtn" class="btn btn-default">Save</button>
-   	
-  <div class="checkbox">
-    <label>
-      <input id="autosavecheckbox" type="checkbox" checked="checked"> Autosave
-    </label>
-  </div>
-</div>
-<div class="row padded-row">
-	<div id="the-table" class="handsontable" style="display: none;"></div>
+
+<div id="prompt" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Confirm Modifications</h4>
+        </div>
+        <div class="modal-body" id="prompt-content"></div>
+        <div class="modal-footer">
+          <button id="prompt-cancel" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button id="prompt-save" type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div id="extra-table" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog big-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button id="prompt-x" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Secondary Table</h4>
+        </div>
+        <div class="modal-body col-xs-12 table-modal">
+        	<div id="extra-table-table"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="prompt-cancel" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button id="prompt-save" type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 {% csrf_token %}
 <script>
@@ -41,12 +71,11 @@
 {% if debug %}
 <script src="{% static "js/lib/lodash.js" %}"></script>
 <script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
-<script src="{% static "js/lib/bootbox.js" %}"></script>
 {% else %}
 <script src="{% static "js/lib/lodash.min.js" %}"></script>
 <script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
-<script src="{% static "js/lib/bootbox.min.js" %}"></script>
 {% endif %}
-<script src="{% static "js/lib/jquery.handsontable.removeRow.js" %}"></script>
+<script src="{% static "js/hot-plugins.js" %}"></script>
+<script src="{% static "js/table.js" %}?"></script>
 <script src="{% static "js/handsontable_display.js" %}?"></script>
 {% endblock %}
