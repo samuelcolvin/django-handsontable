@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% load HotDjangoTags %}
+
+{% block extra_css %}
+	{% hot_render_css %}
+{% endblock %}
+
+{% block content %}
+	{% hot_render app_name model_name %}
+{% endblock content %}
+
+{% block extra_js %}
+	{% hot_render_js %}
+{% endblock %}

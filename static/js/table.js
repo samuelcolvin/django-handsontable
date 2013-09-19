@@ -3,6 +3,7 @@
 function HandsontableDisplay(S){
 	var max_id, original_max_id, original_data;//, row_count_original;
 	S.$table_container = $(S.table);
+	S.$inner_container = S.$table_container.find('#table-btn-container');
 	S.$table = S.$table_container.find('#hot-table');
 	S.$save = S.$table_container.find('#savebtn');
 	S.$load = S.$table_container.find('#loadbtn');
@@ -27,6 +28,7 @@ function HandsontableDisplay(S){
 		handsontable_settings.height = S.height;
 
 	this.load_table = function() {
+		load_msg = 'Loaded Data'
 		get_data();
 	};
 	
@@ -35,11 +37,21 @@ function HandsontableDisplay(S){
 			url : S.url,
 			dataType : 'json',
 			type : 'GET',
-			success : load_data
+			success : insert_data,
+			error: process_errors,
 		});
+		
+		function process_errors(jqXHR, status, error_msg){
+			message_fade('ERROR occurred: ' + error_msg, 0);
+			S.$error.show();
+			S.$error.text('response text: ' + jqXHR.responseText);
+			var response = JSON.parse(jqXHR.responseText);
+			console.log(response);
+		}
 	}
 	
-	function load_data(data_headings) {
+	var load_msg;
+	function insert_data(data_headings) {
 		column_info = data_headings.HEADINGS;
 		var data = data_headings.DATA;
 		max_id = _.max(data, 'id').id;
@@ -49,17 +61,39 @@ function HandsontableDisplay(S){
 			data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
 		}
 		handsontable_settings.columns = column_info.map(generate_column_info);
-		handsontable_settings.colHeaders = column_info.map(function(item){ return item.header;});
+		handsontable_settings.colHeaders = column_info.map(function(item){ return item.heading;});
 		
-		S.$table_container.show();
+		S.$inner_container.show();
 		S.$table.handsontable(handsontable_settings);
 		handsontable = S.$table.data('handsontable');
 		
 		original_data = _.cloneDeep(data);
 		handsontable.loadData(data);
-		message_fade('Loaded data from Server.', 2000);
+		if (load_msg != null){
+			var msg = load_msg;
+			load_msg = null;
+		} else{
+			var msg = 'Reloaded Data';
+		}
+		message_fade(msg, 2000);
 		S.$error.hide();
 		S.$save.prop('disabled', true);
+	}
+	
+	function ask_load(){
+		var q = 'Are you sure you want to reload data from the server? <strong>All unsaved changes will be lost.</strong>';
+		$('#prompt-content').html(q);
+		$('#prompt-do').text('Reload');
+		$('#prompt-do').one('click', msg_get_data);
+		$('#prompt').unbind();
+		$('#prompt').modal('show');
+	}
+		
+	function msg_get_data(){
+		message_fade('Reloading data from server...', 0);
+		$('#prompt').unbind();
+		$('#prompt').modal('hide');
+		get_data();
 	}
 	
 	function generate_column_info(item){
@@ -76,8 +110,12 @@ function HandsontableDisplay(S){
 			info.source = item.fk_items;
 			info.strict = true;
 		}
-		else if (item.type == 'ManyToManyField' || item.type == 'RelatedObject'){
-			info.type = {renderer: extra_render};
+		else if (item.type == 'ManyToManyField'){
+			info.type = {renderer: M2M_renderer};
+			info.readOnly = true;
+		}
+		else if (item.type == 'RelatedObject'){
+			info.type = {renderer: RelatedObject_renderer};
 			info.readOnly = true;
 		}
 		else if(item.type == 'DecimalField'){
@@ -93,8 +131,18 @@ function HandsontableDisplay(S){
 		td.innerHTML = '<div class="large_item">' + value + '</div>';
 		return td;
 	};
+	
+	function M2M_renderer(instance, td, row, col, prop, value, cellProperties) {
+		return extra_renderer(instance, td, row, col, prop, value, cellProperties, false);
+	}
+	
+	function RelatedObject_renderer(instance, td, row, col, prop, value, cellProperties) {
+		var id = instance.getDataAtRowProp(row, 'id');
+		var disabled = _.findIndex(original_data, function(row){return id == row.id;}) == -1;
+		return extra_renderer(instance, td, row, col, prop, value, cellProperties, disabled);
+	}
 
-	function extra_render(instance, td, row, col, prop, value, cellProperties) {
+	function extra_renderer(instance, td, row, col, prop, value, cellProperties, disabled) {
 		if (value == null){
 			$(td).find('.btn').remove();
 			return td;
@@ -103,6 +151,7 @@ function HandsontableDisplay(S){
 			var btn = document.createElement('button');
 			var text = value == null ? 'Empty' : value.length + ' items';
 			$(btn).addClass('btn btn-default cell-button').text(text);
+			$(btn).prop('disabled', disabled);
 			$(btn).on('mouseup', function() { load_extra_table(row, prop);});
 			$(td).html($(btn));
 			$(td).addClass('button-cell');
@@ -117,14 +166,6 @@ function HandsontableDisplay(S){
 		if (_.contains(nonselect, meta.prop)) {
 			handsontable.deselectCell();
 		}
-	}
-
-	function ask_load(){
-		var q = 'Are you sure you want to reload data from the server? <strong>All unsaved changes will be lost.</strong>';
-		$('#prompt-content').html(q);
-		$('#prompt-do').text('Reload');
-		$('#prompt-do').one('click', get_data);
-		$('#prompt').modal('show');
 	}
 	
 	var fadeout_msg = "$('#" + S.$message.attr('id') + "').fadeOut()";
@@ -168,7 +209,10 @@ function HandsontableDisplay(S){
 	function add_row(row_no){
 		max_id += 1;
 		handsontable.setDataAtRowProp(row_no, 'id', max_id, 'ignore');
-		_.map(_.filter(column_info, {type:"ManyToManyField"}), function(col){
+		_.forEach(_.filter(column_info, {type:'ManyToManyField'}), function(col){
+			handsontable.setDataAtRowProp(row_no, col.name, [], 'ignore');
+		});
+		_.forEach(_.filter(column_info, {type:'RelatedObject'}), function(col){
 			handsontable.setDataAtRowProp(row_no, col.name, [], 'ignore');
 		});
 	}
@@ -186,7 +230,7 @@ function HandsontableDisplay(S){
 				height: 300,
 				row: row,
 				prop: prop,
-				heading: _.find(column_info, {name: prop}),
+				heading: _.find(column_info, {name: prop}).heading,
 				options: column.fk_items
 			};
 			var data = handsontable.getDataAtRowProp(row, prop);
@@ -198,19 +242,19 @@ function HandsontableDisplay(S){
 				message: '#extra-message',
 				url: column.url,
 				filter_on: column.filter,
-				filter_value: handsontable.getDataAtRowProp(row, 'id')
+				filter_value: handsontable.getDataAtRowProp(row, 'id'),
+				callback: msg_get_data
 			};
 			
 			var extra_table = new HandsontableDisplay(extra_table_settings);
 			extra_table.load_table();
-			$('#extra-table-big').find('#done').one('click', get_data);
 			$('#extra-table-big').modal('show');
 		}
 	
 		function extra_small_table_callback(row, col, data){
 			handsontable.setDataAtRowProp(row, col, data, 'ignore');
 			S.$save.prop('disabled', false);
-			message_fade('Save Required', 1000);
+			message_fade('Save Required', 2000);
 		}
 	}
 
@@ -226,7 +270,7 @@ function HandsontableDisplay(S){
 		};
 		// removed unchanged rows from changed
 	    _.remove(changed, function(row){ 
-	    	return _.findIndex(original_data, row) != -1;
+	    	return _.findIndex(original_data, function(row2){ return _.isEqual(row2, row);}) != -1;
 	    });
 	    // remove null rows from changed
 		_.remove(changed, function(row){
@@ -249,11 +293,12 @@ function HandsontableDisplay(S){
 	    });
 		
 		if (changed.length == 0 && deleted.length == 0){
-			message_fade('Nothing to Save', 500);
+			message_fade('Nothing to Save', 2000);
 			S.$error.hide();
 			return;
 		}
-		
+		if (_.has(S, 'callback'))
+			S.$table_container.on('hidden.bs.modal',  S.callback);
 		ask_question(changed, deleted, added.length);
 		
 		function ask_question(changed, deleted, no_added){
@@ -283,6 +328,8 @@ function HandsontableDisplay(S){
 		}
 		
 		function modify_delete(){
+			$('#prompt').unbind();
+			$('#prompt').modal('hide');
 			message_fade('Saving ' + (changed.length + deleted.length) + ' changes to the server....', 0);
 			var to_send = JSON.stringify({'MODIFY': changed, 'DELETE': deleted});
 			$.ajax({
@@ -293,19 +340,17 @@ function HandsontableDisplay(S){
 				data: to_send,
 				success: process_success,
 				error: process_errors,
-				complete: always
 			});
 		 }
 		 
 		 function cancel(){
-			message_fade('Not Saving Changes', 1000);
+			message_fade('Not Saving Changes', 2000);
 		}
 		
 		function process_success(data) {
-			load_data(data);
-			message_fade('Data Saved, Table Reloaded from Server', 2000);
-			S.$error.hide();
 			S.$save.prop('disabled', true);
+			load_msg = 'Data Saved & Reloaded';
+			insert_data(data);
 		}
 		
 		function process_errors(jqXHR, status, error_msg){
@@ -345,9 +390,6 @@ function HandsontableDisplay(S){
 			else{
 				S.$error.text('response text: ' + jqXHR.responseText);
 			}
-		}
-		
-		function always(){
 		}
 		
 		function colour_cells(id, col_name){

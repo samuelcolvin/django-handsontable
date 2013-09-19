@@ -36,8 +36,8 @@
 	margin-bottom: 20px;
 }
 
-.indent-buttons {
-	margin-left: 35px;
+.bodge-indent {
+	margin-left: 10px;
 }
 
 .error-cell {
@@ -45,12 +45,13 @@
 }
 
 #error {
-	max-height: 100px;
+	max-height: 200px;
 	overflow: auto;
 }
 
 .msg-warning-row {
 	min-height: 75px;
+	margin-left: -4px;
 }
 
 .big-modal {
@@ -68,21 +69,21 @@
 	padding-right: 40px;
 }
 
-.handsontable.htRemoveRow th.htRemoveRow {
-	text-align: right;
+.handsontable col.rowHeader {
+	width: 26px !important;
 }
 
 .handsontable.htRemoveRow th.htRemoveRow .btn {
 	background-color: #428bca;
 	border-radius: 9px;
-	padding: 0 6px 0 6px;
+	padding: 0 2px 0 2px;
 	color: #FFF;
 	cursor: pointer;
 	font-size: 11px;
 	font-weight: bold;
 	display: none;
 	margin: 0 auto;
-	width: 20px;
+	width: 13px;
 }
 
 .handsontable.htRemoveRow th.htRemoveRow .btn:hover {

@@ -1,6 +1,8 @@
 from rest_framework import serializers
 import inspect, settings
 
+__version__ = '0.1'
+
 class MetaBaseDisplayModel(type):
     def __init__(cls, *args, **kw):
         type.__init__(cls, *args, **kw)

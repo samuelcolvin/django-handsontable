@@ -9,6 +9,7 @@ from django.http import Http404
 import traceback
 from django.db import models
 from django.core.urlresolvers import reverse
+from time import sleep
 
 class ManyEnabledRouter(routers.DefaultRouter):
     routes = routers.DefaultRouter.routes
@@ -26,11 +27,13 @@ class ManyEnabledRouter(routers.DefaultRouter):
 
 class ManyEnabledViewSet(viewsets.ModelViewSet):
     def list(self, request):
+#         sleep(1.5)
         list_response = super(ManyEnabledViewSet, self).list(request)
         response_data = {'DATA': list_response.data, 'HEADINGS': self._get_headings()}
         return Response(response_data, status = list_response.status_code)
     
     def update_add_delete_many(self, request, *args, **kwargs):
+#         sleep(1.5)
         try:
             self._all_data = request.DATA
             self._base_request = request
@@ -115,7 +118,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
                 verb_name = dj_field.verbose_name
             else:
                 verb_name = field_name
-            field = {'header': verb_name, 'name': field_name}
+            field = {'heading': verb_name, 'name': field_name}
             field['type'] = dj_field.__class__.__name__
             if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):
                 mod = dj_field.rel.to
@@ -132,7 +135,6 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     def _add_fk_model(self, model):
         return ['%d: %s' % id_name for id_name in model.objects.all().values_list('id', 'name')]
 
-
 def generate_viewsets():
     modelviewsets = []
     for app_name, app in HotDjango.get_rest_apps().iteritems():
@@ -141,8 +143,8 @@ def generate_viewsets():
             props['serializer_class'] = disp_model.HotTable
             props['_display_model'] = disp_model
             props['_app_name'] = app_name
-            if not settings.DEBUG:
-                props['permission_classes'] = [permissions.IsAuthenticated]
+#             if not settings.DEBUG:
+            props['permission_classes'] = [permissions.IsAuthenticated]
             prefix = '%s.%s' % (app_name, model_name)
             cls=type(model_name, (ManyEnabledViewSet,), props)
             reverser = generate_reverse(app_name, model_name)
