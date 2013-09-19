@@ -1,7 +1,5 @@
 .handsontable td {
 	max-width: 200px;
-	padding-left: 10px  !important;
-	padding-right: 20px  !important;
 }
 
 .handsontable .large_item {
@@ -38,6 +36,10 @@
 	margin-bottom: 20px;
 }
 
+.indent-buttons {
+	margin-left: 35px;
+}
+
 .error-cell {
 	background-color: #f66 !important;
 }
@@ -47,35 +49,57 @@
 	overflow: auto;
 }
 
-.big-modal{
+.msg-warning-row {
+	min-height: 75px;
+}
+
+.big-modal {
 	width: 900px !important;
 }
 
-.handsontable.htRemoveRow th.htRemoveRow, .handsontable.htCallFunc th.htCallFunc {
-  text-align: right;
-}
-
-.handsontable.htRemoveRow th.htRemoveRow .btn, .handsontable.htCallFunc th.htCallFunc .btn {
-  background-color: #428bca;
-  border-radius: 9px;
-  padding: 0 6px 0 6px;
-  color: #FFF;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: bold;
-  display: none;
-  margin: 0 auto;
-  width: 20px;
-}
-
-.handsontable.htRemoveRow th.htRemoveRow .btn:hover, .handsontable.htCallFunc th.htCallFunc .btn:hover {
-  background-color: #3071a9;
-}
-
-.handsontable .htCallFunc + th, .handsontable .htRemoveRow + th{
-	border-width: 0px;
-}
-
-.table-modal{
+.table-modal {
 	height: 500px;
+}
+
+.small-table {
+	padding: 0 50px;
+}
+.big-table {
+	padding-right: 40px;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow {
+	text-align: right;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow .btn {
+	background-color: #428bca;
+	border-radius: 9px;
+	padding: 0 6px 0 6px;
+	color: #FFF;
+	cursor: pointer;
+	font-size: 11px;
+	font-weight: bold;
+	display: none;
+	margin: 0 auto;
+	width: 20px;
+}
+
+.handsontable.htRemoveRow th.htRemoveRow .btn:hover {
+	background-color: #3071a9;
+}
+
+.handsontable tbody .htRemoveRow + th {
+	border-left-width: 0px;
+}
+
+.cell-button {
+	height: 22px;
+	padding-top: 0px;
+	margin: 1px auto;
+	width: 90%;
+}
+
+.button-cell {
+	text-align: center;
 }

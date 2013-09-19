@@ -32,10 +32,8 @@ $.ajaxSetup({
 });
 
 var main_table_settings = {
-	$table: $("#the-table"),
-	$message: $("#message"),
-	$error: $("#error"),
-	$save: $('#savebtn'),
+	table: '#main-table',
+	message: '#message',
 	url: main_json_url
 };
 

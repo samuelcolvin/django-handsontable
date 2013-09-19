@@ -1,9 +1,23 @@
 from rest_framework import serializers
 import inspect, settings
-from rest_framework import serializers
+
+class MetaBaseDisplayModel(type):
+    def __init__(cls, *args, **kw):
+        type.__init__(cls, *args, **kw)
+        if not (hasattr(cls,'HotTable') or hasattr(cls, 'Table')):
+            return
+        assert hasattr(cls, 'model'), '%s is missing a model, all display models must have a model attribute' % cls.__name__
+        cls.model_name = cls.model.__name__
+        for inner_cls_name in ['HotTable', 'Table']:
+            if hasattr(cls, inner_cls_name):
+                inner_cls = getattr(cls, inner_cls_name)
+                if hasattr(inner_cls, 'Meta'):
+                    inner_cls.Meta.model = cls.model
+                else:
+                    inner_cls.Meta = type('Meta', (), {'model': cls.model})
 
 class BaseDisplayModel:
-    pass
+    __metaclass__ = MetaBaseDisplayModel
 
 class IDNameSerialiser(serializers.RelatedField):
     read_only = False
@@ -14,14 +28,19 @@ class IDNameSerialiser(serializers.RelatedField):
     def to_native(self, item):
         return '%d: %s' % (item.id, item.name)
     
-    def from_native(self, data):
+    def from_native(self, item):
         try:
-            id = int(data)
+            dj_id = int(item)
         except:
-            id = int(data[:data.index(':')])
-        return self._model.objects.get(id = id)
+            dj_id = int(item[:item.index(':')])
+        return self._model.objects.get(id = dj_id)
 
-class Serialiser(serializers.ModelSerializer):
+class ModelSerialiser(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('many', True)
+        super(ModelSerialiser, self).__init__(*args, **kwargs)
+
+class Serialiser(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         kwargs.pop('many', True)
         super(Serialiser, self).__init__(*args, **kwargs)
@@ -29,19 +48,20 @@ class Serialiser(serializers.ModelSerializer):
 def get_display_apps():
     display_modules = map(lambda m: __import__(m + '.display'), settings.DISPLAY_APPS)
     apps={}
-    for dm in display_modules:
-        apps[dm.__name__] = {}
-        for ob_name in dir(dm.display):
-            ob = getattr(dm.display, ob_name)
+    for app in display_modules:
+        apps[app.__name__] = {}
+        for ob_name in dir(app.display):
+            ob = getattr(app.display, ob_name)
             if inherits_from(ob, 'BaseDisplayModel'):
-                apps[dm.__name__][ob_name] = _process_display(dm, ob_name)
+                apps[app.__name__][ob_name] = ob
+                apps[app.__name__][ob_name].app_parent = app.__name__
     return apps
 
 def get_rest_apps():
     display_apps = get_display_apps()
     for disp_app in display_apps.values():
         for model_name in disp_app.keys():
-            if not hasattr(disp_app[model_name], 'Serializer'):
+            if not hasattr(disp_app[model_name], 'HotTable'):
                 del disp_app[model_name]
         if len(disp_app) == 0:
             del disp_app
@@ -52,11 +72,3 @@ def inherits_from(child, parent_name):
         if parent_name in [c.__name__ for c in inspect.getmro(child)[1:]]:
             return True
     return False
-                    
-def _process_display(dm, ob_name):
-    if not hasattr(dm.models, ob_name):
-        raise Exception('%s does not have a model called %s' % (dm.__name__, ob_name))
-    display = getattr(dm.display, ob_name)
-    display.model = getattr(dm.models, ob_name)
-    display.app_parent = dm.__name__
-    return display
