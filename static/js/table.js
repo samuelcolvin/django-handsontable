@@ -179,7 +179,7 @@ function HandsontableDisplay(S){
 
 	var row_count;
 	function b4change(new_changes, source) {
-		if (source === 'loadData' || source === 'id_update') {return;}
+		if (source === 'loadData' || source === 'ignore') {return;}
 		row_count = handsontable.countRows() - handsontable.countEmptyRows();
 	}
 	
