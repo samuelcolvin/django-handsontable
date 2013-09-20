@@ -3,23 +3,21 @@ import inspect, settings
 
 __version__ = '0.1'
 
-class MetaBaseDisplayModel(type):
+class _MetaBaseDisplayModel(type):
     def __init__(cls, *args, **kw):
         type.__init__(cls, *args, **kw)
-        if not (hasattr(cls,'HotTable') or hasattr(cls, 'Table')):
+        if not (hasattr(cls,'HotTable') or hasattr(cls,'DjangoTable')):
             return
-        assert hasattr(cls, 'model'), '%s is missing a model, all display models must have a model attribute' % cls.__name__
+        assert hasattr(cls, 'model'), '%s is missing a model, all display models must have a model attribute at %s' % (cls.__name__, cls.__file__)
         cls.model_name = cls.model.__name__
-        for inner_cls_name in ['HotTable', 'Table']:
-            if hasattr(cls, inner_cls_name):
-                inner_cls = getattr(cls, inner_cls_name)
-                if hasattr(inner_cls, 'Meta'):
-                    inner_cls.Meta.model = cls.model
-                else:
-                    inner_cls.Meta = type('Meta', (), {'model': cls.model})
+        if hasattr(cls, 'HotTable'):
+            if hasattr(cls.HotTable, 'Meta'):
+                cls.HotTable.Meta.model = cls.model
+            else:
+                cls.HotTable.Meta = type('Meta', (), {'model': cls.model})
 
 class BaseDisplayModel:
-    __metaclass__ = MetaBaseDisplayModel
+    __metaclass__ = _MetaBaseDisplayModel
 
 class IDNameSerialiser(serializers.RelatedField):
     read_only = False
@@ -47,7 +45,7 @@ class Serialiser(serializers.Serializer):
         kwargs.pop('many', True)
         super(Serialiser, self).__init__(*args, **kwargs)
 
-def get_display_apps():
+def get_all_apps():
     display_modules = map(lambda m: __import__(m + '.display'), settings.DISPLAY_APPS)
     apps={}
     for app in display_modules:
@@ -60,7 +58,7 @@ def get_display_apps():
     return apps
 
 def get_rest_apps():
-    display_apps = get_display_apps()
+    display_apps = get_all_apps()
     for disp_app in display_apps.values():
         for model_name in disp_app.keys():
             if not hasattr(disp_app[model_name], 'HotTable'):
