@@ -26,9 +26,9 @@ class ManyEnabledRouter(routers.DefaultRouter):
     )
 
 class ManyEnabledViewSet(viewsets.ModelViewSet):
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
 #         sleep(1.5)
-        list_response = super(ManyEnabledViewSet, self).list(request)
+        list_response = super(ManyEnabledViewSet, self).list(request, *args, **kwargs)
         response_data = {'DATA': list_response.data, 'HEADINGS': self._get_headings()}
         return Response(response_data, status = list_response.status_code)
     
