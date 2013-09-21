@@ -112,6 +112,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     def _get_headings(self):
         dm = self._display_model
         fields = []
+        self._all_apps = HotDjango.get_rest_apps()
         for field_name in dm.HotTable.Meta.fields:
             dj_field = dm.model._meta.get_field_by_name(field_name)[0]
             if hasattr(dj_field, 'verbose_name'):
@@ -133,7 +134,12 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
         return fields
     
     def _add_fk_model(self, model):
-        return ['%d: %s' % id_name for id_name in model.objects.all().values_list('id', 'name')]
+        disp_app = HotDjango.find_model(self._all_apps, model)
+        if hasattr(disp_app, 'hot_table_dft_field'):
+            name = disp_app.hot_table_dft_field
+        else:
+            name = 'name'
+        return ['%d: %s' % id_name for id_name in model.objects.all().values_list('id', name)]
 
 def generate_viewsets():
     modelviewsets = []

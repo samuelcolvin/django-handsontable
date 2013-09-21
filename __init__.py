@@ -23,10 +23,11 @@ class IDNameSerialiser(serializers.RelatedField):
     read_only = False
     def __init__(self, model, *args, **kwargs):
         self._model = model
+        self._lookup_field = kwargs.pop('lookup_field', 'name')
         super(IDNameSerialiser, self).__init__(*args, **kwargs)
         
     def to_native(self, item):
-        return '%d: %s' % (item.id, item.name)
+        return '%d: %s' % (item.id, getattr(item, self._lookup_field))
     
     def from_native(self, item):
         try:
@@ -56,7 +57,7 @@ def get_all_apps():
             ob = getattr(app.display, ob_name)
             if inherits_from(ob, 'BaseDisplayModel'):
                 apps[app_name][ob_name] = ob
-                apps[app_name][ob_name].app_parent = app.__name__
+                apps[app_name][ob_name].app_parent = app_name
     return apps
 
 def get_rest_apps():
@@ -68,6 +69,13 @@ def get_rest_apps():
         if len(disp_app) == 0:
             del disp_app
     return display_apps
+
+def find_model(apps, to_fild):
+    for app in apps.values():
+        for disp_model in app.values():
+            if disp_model.model == to_fild:
+                return disp_model
+    return None
 
 def inherits_from(child, parent_name):
     if inspect.isclass(child):
