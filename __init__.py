@@ -46,15 +46,17 @@ class Serialiser(serializers.Serializer):
         super(Serialiser, self).__init__(*args, **kwargs)
 
 def get_all_apps():
-    display_modules = map(lambda m: __import__(m + '.display'), settings.DISPLAY_APPS)
+    importer = lambda m: __import__(m, globals(), locals(), ['display'], -1)
+    display_modules = map(importer, settings.DISPLAY_APPS)
     apps={}
     for app in display_modules:
-        apps[app.__name__] = {}
+        app_name = app.__name__.replace('.', '__')
+        apps[app_name] = {}
         for ob_name in dir(app.display):
             ob = getattr(app.display, ob_name)
             if inherits_from(ob, 'BaseDisplayModel'):
-                apps[app.__name__][ob_name] = ob
-                apps[app.__name__][ob_name].app_parent = app.__name__
+                apps[app_name][ob_name] = ob
+                apps[app_name][ob_name].app_parent = app.__name__
     return apps
 
 def get_rest_apps():
