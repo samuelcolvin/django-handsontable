@@ -23,11 +23,14 @@ class IDNameSerialiser(serializers.RelatedField):
     read_only = False
     def __init__(self, model, *args, **kwargs):
         self._model = model
-        self._lookup_field = kwargs.pop('lookup_field', 'name')
         super(IDNameSerialiser, self).__init__(*args, **kwargs)
         
     def to_native(self, item):
-        return '%d: %s' % (item.id, getattr(item, self._lookup_field))
+        if hasattr(item, 'hot_name'):
+            name = item.hot_name()
+        else:
+            name = str(item)
+        return '%d: %s' % (item.id, name)
     
     def from_native(self, item):
         try:

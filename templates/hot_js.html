@@ -1,11 +1,10 @@
 {% load staticfiles %}
 {% if debug %}
 <script src="{% static "js/lib/lodash.js" %}"></script>
-<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
 {% else %}
 <script src="{% static "js/lib/lodash.min.js" %}"></script>
-<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
 {% endif %}
+<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
 <script src="{% static "js/lib/numeral.min.js" %}"></script>
 <script src="{% static "js/lib/languages.min.js" %}"></script>
 <script src="{% static "js/hot-plugins.js" %}"></script>

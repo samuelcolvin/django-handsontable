@@ -134,12 +134,14 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
         return fields
     
     def _add_fk_model(self, model):
-        disp_app = HotDjango.find_model(self._all_apps, model)
-        if hasattr(disp_app, 'hot_table_dft_field'):
-            name = disp_app.hot_table_dft_field
+        return ['%d: %s' % self._get_id_name(item) for item in model.objects.all()]
+    
+    def _get_id_name(self, item):
+        if hasattr(item, 'hot_name'):
+            name = item.hot_name()
         else:
-            name = 'name'
-        return ['%d: %s' % id_name for id_name in model.objects.all().values_list('id', name)]
+            name = str(item)
+        return (item.id, name)
 
 def generate_viewsets():
     modelviewsets = []

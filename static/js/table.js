@@ -22,6 +22,7 @@ function HandsontableDisplay(S){
 		afterChange: changed,
 		removeRowPlugin: remove_row,
 	  	onSelection: on_select,
+		height: 700,
 	};
 	
 	if (_.has(S, 'height'))
