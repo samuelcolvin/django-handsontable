@@ -56,6 +56,7 @@ function HandsontableDisplay(S){
 		column_info = data_headings.HEADINGS;
 		var data = data_headings.DATA;
 		max_id = _.max(data, 'id').id;
+		if (_.isUndefined(max_id)) max_id=0;
 		original_max_id = max_id;
 		if (_.has(S, 'filter_on')){
 			_.remove(column_info, function(col){ return col.name == S.filter_on;});
@@ -203,7 +204,7 @@ function HandsontableDisplay(S){
 	
 		function row_is_empty(row_no){
 			var row = handsontable.getDataAtRow(row_no);
-			return _.pull(_.rest(_.toArray(row)), null, "").length == 0; 
+			return _.pull(_.toArray(_.omit(row, 'id')), null, "").length == 0; 
 		}
 	}
 	
