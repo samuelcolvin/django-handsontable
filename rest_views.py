@@ -79,7 +79,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
             response_data['IDS'][data_item['id']] = {'status': response.status_code}
             if response.status_code is status.HTTP_201_CREATED and self._response_status is status.HTTP_200_OK:
                 self._response_status = status.HTTP_201_CREATED
-            elif response.status_code is not status.HTTP_200_OK:
+            if response.status_code not in (status.HTTP_200_OK, status.HTTP_201_CREATED):
                 self._response_status = status.HTTP_303_SEE_OTHER
                 response_data['IDS'][data_item['id']]['data'] = response.data
                 response_data['STATUS'] = 'PARTIAL ERROR'
