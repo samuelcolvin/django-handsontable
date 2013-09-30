@@ -16,7 +16,6 @@ class HotTableNode(template.Node):
     def __init__(self, app_name, model_name):
         self.app_name = template.Variable(app_name)
         self.model_name = template.Variable(model_name)
-        print self.app_name, self.model_name
 
     def render(self, context):
         t = template.loader.get_template('handsontable.html')
