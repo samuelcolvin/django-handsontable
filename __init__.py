@@ -54,13 +54,13 @@ def get_all_apps():
     display_modules = map(importer, settings.DISPLAY_APPS)
     apps={}
     for app in display_modules:
-        app_name = app.__name__.replace('.', '__')
+        app_name = app.display.app_name
         apps[app_name] = {}
         for ob_name in dir(app.display):
             ob = getattr(app.display, ob_name)
             if inherits_from(ob, 'BaseDisplayModel'):
                 apps[app_name][ob_name] = ob
-                apps[app_name][ob_name].app_parent = app_name
+                apps[app_name][ob_name]._app_name = app_name
     return apps
 
 def get_rest_apps():
@@ -72,13 +72,6 @@ def get_rest_apps():
         if len(disp_app) == 0:
             del disp_app
     return display_apps
-
-def find_model(apps, to_find):
-    for app in apps.values():
-        for disp_model in app.values():
-            if disp_model.model == to_find:
-                return disp_model
-    return None
 
 def inherits_from(child, parent_name):
     if inspect.isclass(child):
