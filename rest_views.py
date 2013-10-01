@@ -10,6 +10,13 @@ import traceback
 from django.db import models
 from django.core.urlresolvers import reverse
 from time import sleep
+from rest_framework.permissions import BasePermission
+
+class CustomIsAuthenticated(BasePermission):
+    def has_permission(self, request, view):
+        if request.user and request.user.is_authenticated():
+            return HotDjango.is_allowed_hot(request.user)
+        return False
 
 class ManyEnabledRouter(routers.DefaultRouter):
     routes = routers.DefaultRouter.routes
@@ -29,7 +36,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
 #         sleep(1.5)
         list_response = super(ManyEnabledViewSet, self).list(request, *args, **kwargs)
-        response_data = {'DATA': list_response.data, 'HEADINGS': self._get_headings()}
+        response_data = {'DATA': list_response.data, 'HEADINGS': self._get_info()}
         return Response(response_data, status = list_response.status_code)
     
     def update_add_delete_many(self, request, *args, **kwargs):
@@ -109,29 +116,34 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
         except Http404:
             return False
     
-    def _get_headings(self):
-        dm = self._display_model
+    def _get_info(self):
         fields = []
         self._all_apps = HotDjango.get_rest_apps()
-        for field_name in dm.HotTable.Meta.fields:
-            dj_field = dm.model._meta.get_field_by_name(field_name)[0]
-            if hasattr(dj_field, 'verbose_name'):
-                verb_name = dj_field.verbose_name
-            else:
-                verb_name = field_name
-            field = {'heading': verb_name, 'name': field_name}
-            field['type'] = dj_field.__class__.__name__
-            if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):
-                mod = dj_field.rel.to
-                field['fk_items'] = self._add_fk_model(mod)
-            elif isinstance(dj_field, models.related.RelatedObject):
-                if hasattr(dm, 'related_tables'):
-                    mod = dj_field.model
-                    other_disp_model = dm.related_tables[field_name]
-                    field['url'] = reverse(generate_reverse(self._app_name, other_disp_model.__name__) + '-list')
-                    field['filter'] = dj_field.field.name
-            fields.append(field)
+        for field_name in self._display_model.HotTable.Meta.fields:
+            fields.append(self._get_field_info(field_name))
         return fields
+    
+    def _get_field_info(self, field_name):
+        dm = self._display_model
+        dj_field = dm.model._meta.get_field_by_name(field_name)[0]
+        if hasattr(dj_field, 'verbose_name'):
+            verb_name = dj_field.verbose_name
+        else:
+            verb_name = field_name
+        field = {'heading': verb_name, 'name': field_name}
+        field['type'] = dj_field.__class__.__name__
+        if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):
+            mod = dj_field.rel.to
+            field['fk_items'] = self._add_fk_model(mod)
+        elif isinstance(dj_field, models.related.RelatedObject):
+            if hasattr(dm, 'related_tables'):
+                mod = dj_field.model
+                other_disp_model = dm.related_tables[field_name]
+                field['url'] = reverse(generate_reverse(self._app_name, other_disp_model.__name__) + '-list')
+                field['filter'] = dj_field.field.name
+        elif hasattr(dj_field, 'choices') and len(dj_field.choices) > 0:
+            field['choices'] = [choice[1] for choice in dj_field.choices]
+        return field
     
     def _add_fk_model(self, model):
         return ['%d: %s' % self._get_id_name(item) for item in model.objects.all()]
@@ -151,8 +163,7 @@ def generate_viewsets():
             props['serializer_class'] = disp_model.HotTable
             props['_display_model'] = disp_model
             props['_app_name'] = app_name
-#             if not settings.DEBUG:
-            props['permission_classes'] = [permissions.IsAuthenticated]
+            props['permission_classes'] = [permissions.IsAuthenticated, CustomIsAuthenticated]
             prefix = '%s.%s' % (app_name, model_name)
             cls=type(model_name, (ManyEnabledViewSet,), props)
             reverser = generate_reverse(app_name, model_name)

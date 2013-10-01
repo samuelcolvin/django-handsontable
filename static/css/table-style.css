@@ -105,6 +105,6 @@
 	text-align: center;
 }
 
-.handsontable  .horizontal{
+#extra-table-big .handsontable  .horizontal{
 	display: none !important;
 }

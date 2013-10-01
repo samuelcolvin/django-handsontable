@@ -39,15 +39,27 @@ class IDNameSerialiser(serializers.RelatedField):
             dj_id = int(item[:item.index(':')])
         return self._model.objects.get(id = dj_id)
 
+class ChoiceSerialiser(serializers.Serializer):
+    read_only = False
+    def __init__(self, choices, *args, **kwargs):
+        self._choices = choices
+        super(ChoiceSerialiser, self).__init__(*args, **kwargs)
+        
+    def to_native(self, item):
+        return next(choice[1] for choice in self._choices if choice[0] == item)
+    
+    def from_native(self, item):
+        return next(choice[0] for choice in self._choices if choice[1] == item)
+    
 class ModelSerialiser(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.pop('many', True)
         super(ModelSerialiser, self).__init__(*args, **kwargs)
 
-class Serialiser(serializers.Serializer):
-    def __init__(self, *args, **kwargs):
-        kwargs.pop('many', True)
-        super(Serialiser, self).__init__(*args, **kwargs)
+# class Serialiser(serializers.Serializer):
+#     def __init__(self, *args, **kwargs):
+#         kwargs.pop('many', True)
+#         super(Serialiser, self).__init__(*args, **kwargs)
 
 def get_all_apps():
     importer = lambda m: __import__(m, globals(), locals(), ['display'], -1)
@@ -76,5 +88,17 @@ def get_rest_apps():
 def inherits_from(child, parent_name):
     if inspect.isclass(child):
         if parent_name in [c.__name__ for c in inspect.getmro(child)[1:]]:
+            return True
+    return False
+
+def is_allowed_hot(user, permitted_groups=None):
+    if user.is_staff:
+        return True
+    if permitted_groups is None:
+        permitted_groups = settings.HOT_PERMITTED_GROUPS
+        if permitted_groups is 'all':
+            return True
+    for group in user.groups.all().values_list('name'):
+        if group in permitted_groups:
             return True
     return False

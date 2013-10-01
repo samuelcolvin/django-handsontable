@@ -29,7 +29,7 @@ function HandsontableDisplay(S){
 		handsontable_settings.height = S.height;
 
 	this.load_table = function() {
-		load_msg = 'Loaded Data'
+		load_msg = 'Loaded Data';
 		get_data();
 	};
 	
@@ -86,15 +86,13 @@ function HandsontableDisplay(S){
 		var q = 'Are you sure you want to reload data from the server? <strong>All unsaved changes will be lost.</strong>';
 		$('#prompt-content').html(q);
 		$('#prompt-do').text('Reload');
-		$('#prompt-do').one('click', msg_get_data);
 		$('#prompt').unbind();
+		$('#prompt-do').one('click', msg_get_data);
 		$('#prompt').modal('show');
 	}
 		
 	function msg_get_data(){
 		message_fade('Reloading data from server...', 0);
-		$('#prompt').unbind();
-		$('#prompt').modal('hide');
 		get_data();
 	}
 	
@@ -108,7 +106,7 @@ function HandsontableDisplay(S){
 			info.type = {renderer : long_renderer};
 		}
 		else if (item.type == 'ForeignKey'){
-			info.type = {renderer: foreign_key_renderer, editor: Handsontable.AutocompleteEditor};
+			info.type = {renderer: dropdown_renderer, editor: Handsontable.AutocompleteEditor};
 			info.source = item.fk_items;
 			info.strict = true;
 		}
@@ -119,6 +117,11 @@ function HandsontableDisplay(S){
 		else if (item.type == 'RelatedObject'){
 			info.type = {renderer: RelatedObject_renderer};
 			info.readOnly = true;
+		}
+		else if (_.has(item, 'choices')){
+			info.type = {renderer: dropdown_renderer, editor: Handsontable.AutocompleteEditor};
+			info.source = item.choices;
+			info.strict = true;
 		}
 		else if(item.type == 'DecimalField'){
 			info.type = 'numeric';
@@ -227,30 +230,34 @@ function HandsontableDisplay(S){
 	function load_extra_table(row, prop){
 		var column = _.find(column_info, {name:prop});
 		if (column.type == 'ManyToManyField'){
-			var second_table_settings = {
-				table: '#extra-table',
-				height: 300,
-				row: row,
-				prop: prop,
-				heading: _.find(column_info, {name: prop}).heading,
-				options: column.fk_items
-			};
-			var data = handsontable.getDataAtRowProp(row, prop);
-			var second_table = new SimpleHandsontableDisplay(second_table_settings, data, extra_small_table_callback);
 			$('#extra-table').modal('show');
+			$('#extra-table').on('shown.bs.modal', function(){
+				var second_table_settings = {
+					table: '#extra-table',
+					height: 300,
+					row: row,
+					prop: prop,
+					heading: _.find(column_info, {name: prop}).heading,
+					options: column.fk_items
+				};
+				var data = handsontable.getDataAtRowProp(row, prop);
+				var second_table = new SimpleHandsontableDisplay(second_table_settings, data, extra_small_table_callback);
+			});
 		} else if(column.type == 'RelatedObject'){
-			var extra_table_settings = {
-				table: '#extra-table-big',
-				message: '#extra-message',
-				url: column.url,
-				filter_on: column.filter,
-				filter_value: handsontable.getDataAtRowProp(row, 'id'),
-				callback: msg_get_data
-			};
-			
-			var extra_table = new HandsontableDisplay(extra_table_settings);
-			extra_table.load_table();
 			$('#extra-table-big').modal('show');
+			$('#extra-table-big').on('shown.bs.modal', function(){
+				var extra_table_settings = {
+					table: '#extra-table-big',
+					message: '#extra-message',
+					url: column.url,
+					filter_on: column.filter,
+					filter_value: handsontable.getDataAtRowProp(row, 'id'),
+					callback: msg_get_data
+				};
+				// $('#btn-done').click(function(){$('#extra-table-big').modal('hide');});
+				var extra_table = new HandsontableDisplay(extra_table_settings);
+				extra_table.load_table();
+			});
 		}
 	
 		function extra_small_table_callback(row, col, data){
@@ -296,6 +303,7 @@ function HandsontableDisplay(S){
 		
 		if (changed.length == 0 && deleted.length == 0){
 			message_fade('Nothing to Save', 2000);
+			S.$save.prop('disabled', true);
 			S.$error.hide();
 			return;
 		}
@@ -322,6 +330,7 @@ function HandsontableDisplay(S){
 				q += 'delete ' + deleted.length + ' row' + (deleted.length==1?'':'s');
 			}
 			q += '?';
+			$('#prompt').unbind();
 			$('#prompt-content').text(q);
 			$('#prompt-do').text('Save Changes');
 			$('#prompt-do').one('click', modify_delete);
@@ -329,9 +338,9 @@ function HandsontableDisplay(S){
 			$('#prompt').modal('show');
 		}
 		
+		var cancelling = true;
 		function modify_delete(){
-			$('#prompt').unbind();
-			$('#prompt').modal('hide');
+			cancelling = false;
 			message_fade('Saving ' + (changed.length + deleted.length) + ' changes to the server....', 0);
 			var to_send = JSON.stringify({'MODIFY': changed, 'DELETE': deleted});
 			$.ajax({
@@ -346,7 +355,11 @@ function HandsontableDisplay(S){
 		 }
 		 
 		 function cancel(){
-			message_fade('Not Saving Changes', 2000);
+		 	if (cancelling){
+				message_fade('Not Saving Changes', 2000);
+				S.$save.prop('disabled', true);
+				S.$error.hide();
+		 	}
 		}
 		
 		function process_success(data) {
@@ -413,7 +426,7 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 
 	var columns = [{
 		type : {
-			renderer : foreign_key_renderer,
+			renderer : dropdown_renderer,
 			editor : Handsontable.AutocompleteEditor
 		},
 		source : S.options,
@@ -452,7 +465,7 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 }
 
 
-function foreign_key_renderer(instance, td, row, col, prop, value, cellProperties) {
+function dropdown_renderer(instance, td, row, col, prop, value, cellProperties) {
 	Handsontable.AutocompleteCell.renderer.apply(this, arguments);
 	// td.style.fontStyle = 'italic';
 	td.title = 'Type to show the list of options';
