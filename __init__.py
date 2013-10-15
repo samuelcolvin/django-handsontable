@@ -98,7 +98,7 @@ def is_allowed_hot(user, permitted_groups=None):
         permitted_groups = settings.HOT_PERMITTED_GROUPS
         if permitted_groups is 'all':
             return True
-    for group in user.groups.all().values_list('name'):
+    for group in user.groups.all().values_list('name', flat=True):
         if group in permitted_groups:
             return True
     return False
