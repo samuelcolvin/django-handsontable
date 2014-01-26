@@ -1,12 +1,12 @@
 {% load staticfiles %}
 {% if debug %}
-<script src="{% static "js/lib/lodash.js" %}"></script>
+<script src="{% static "lib/js/lodash.js" %}"></script>
 {% else %}
-<script src="{% static "js/lib/lodash.min.js" %}"></script>
+<script src="{% static "lib/js/lodash.min.js" %}"></script>
 {% endif %}
-<script src="{% static "js/lib/jquery.handsontable.full.js" %}"></script>
-<script src="{% static "js/lib/numeral.min.js" %}"></script>
-<script src="{% static "js/lib/languages.min.js" %}"></script>
-<script src="{% static "js/hot-plugins.js" %}"></script>
-<script src="{% static "js/table.js" %}?"></script>
-<script src="{% static "js/handsontable_display.js" %}?"></script>
+<script src="{% static "lib/js/jquery.handsontable.full.js" %}"></script>
+<script src="{% static "lib/js/numeral.min.js" %}"></script>
+<script src="{% static "lib/js/languages.min.js" %}"></script>
+<script src="{% static "hot/js/hot-plugins.js" %}"></script>
+<script src="{% static "hot/js/table.js" %}?"></script>
+<script src="{% static "hot/js/handsontable_display.js" %}?"></script>

@@ -1,4 +1,4 @@
 *.log
 *.pot
 *.pyc
-/static/libs
+/static/lib
