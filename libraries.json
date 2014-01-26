@@ -1,0 +1,17 @@
+{
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/css/bootstrap.css": "static/libs/css/bootstrap.css",
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/css/bootstrap.min.css": "static/libs/css/bootstrap.min.css",
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/css/bootstrap-theme.css": "static/libs/css/bootstrap-theme.css",
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/css/bootstrap-theme.min.css": "static/libs/css/bootstrap-theme.min.css",
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/js/bootstrap.js": "static/libs/js/bootstrap.js",
+  "https://raw2.github.com/twbs/bootstrap/v3.0.3/dist/js/bootstrap.min.js": "static/libs/js/bootstrap.min.js",
+  "https://raw2.github.com/warpech/jquery-handsontable/v0.10.1/dist/jquery.handsontable.full.css": "static/libs/css/jquery.handsontable.full.css",
+  "https://raw2.github.com/warpech/jquery-handsontable/v0.10.1/dist/jquery.handsontable.full.js": "static/libs/js/jquery.handsontable.full.js",
+  "http://code.jquery.com/jquery-1.11.0.js": "static/libs/js/jquery-1.11.0.js",
+  "http://code.jquery.com/jquery-1.11.0.min.js": "static/libs/js/jquery-1.11.0.min.js",
+  "http://code.jquery.com/jquery-1.11.0.min.map": "static/libs/js/jquery-1.11.0.min.map",
+  "https://raw2.github.com/adamwdraper/Numeral-js/1.5.3/min/languages.min.js": "static/libs/js/languages.min.js",
+  "https://raw2.github.com/adamwdraper/Numeral-js/1.5.3/min/numeral.min.js": "static/libs/js/numeral.min.js",
+  "https://raw2.github.com/lodash/lodash/2.4.1/dist/lodash.js": "static/libs/js/lodash.js",
+  "https://raw2.github.com/lodash/lodash/2.4.1/dist/lodash.min.js": "static/libs/js/lodash.min.js"
+}

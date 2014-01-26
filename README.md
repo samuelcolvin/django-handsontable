@@ -1,9 +1,9 @@
 django-hot
 ==========
 
-Django app to implement jquery-handsontable. Uses django-rest-framework.
+Django app to implement handsontable (jquery-handsontable). Uses django-rest-framework.
 
-Currently work in progress, should be useable pretty soon.
+To download `js` and `css` libraries, run ./pull.py
 
-Copyright Samuel Colvin, 2013
+Copyright Samuel Colvin, 2013, 2014
 
