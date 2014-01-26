@@ -3,7 +3,7 @@
 function HandsontableDisplay(S){
 	var max_id, original_max_id, original_data;//, row_count_original;
 	S.$table_container = $(S.table);
-	S.$inner_container = S.$table_container.find('#table-btn-container');
+	S.$start_hidden = S.$table_container.find('.start-hidden');
 	S.$table = S.$table_container.find('#hot-table');
 	S.$save = S.$table_container.find('#savebtn');
 	S.$load = S.$table_container.find('#loadbtn');
@@ -27,8 +27,13 @@ function HandsontableDisplay(S){
 	
 	if (_.has(S, 'height'))
 		handsontable_settings.height = S.height;
+	
+	this.set_height = function(h){
+		handsontable_settings.height = h;
+	};
 
 	this.load_table = function() {
+		console.log('height',handsontable_settings.height);
 		load_msg = 'Loaded Data';
 		get_data();
 	};
@@ -43,6 +48,7 @@ function HandsontableDisplay(S){
 		});
 		
 		function process_errors(jqXHR, status, error_msg){
+			console.log('got error');
 			message_fade('ERROR occurred: ' + error_msg, 0);
 			S.$error.show();
 			S.$error.text('response text: ' + jqXHR.responseText);
@@ -53,33 +59,41 @@ function HandsontableDisplay(S){
 	
 	var load_msg;
 	function insert_data(data_headings) {
-		column_info = data_headings.HEADINGS;
-		var data = data_headings.DATA;
-		max_id = _.max(data, 'id').id;
-		if (_.isUndefined(max_id)) max_id=0;
-		original_max_id = max_id;
-		if (_.has(S, 'filter_on')){
-			_.remove(column_info, function(col){ return col.name == S.filter_on;});
-			data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
+		try{
+			column_info = data_headings.HEADINGS;
+			var data = data_headings.DATA;
+			max_id = _.max(data, 'id').id;
+			if (_.isUndefined(max_id)) max_id=0;
+			original_max_id = max_id;
+			if (_.has(S, 'filter_on')){
+				_.remove(column_info, function(col){ return col.name == S.filter_on;});
+				data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
+			}
+			handsontable_settings.columns = column_info.map(generate_column_info);
+			handsontable_settings.colHeaders = column_info.map(function(item){ return item.heading;});
+			
+			S.$start_hidden.show();
+			S.$table.removeData().empty();
+			S.$table.handsontable(handsontable_settings);
+			handsontable = S.$table.data('handsontable');
+			
+			original_data = _.cloneDeep(data);
+			handsontable.loadData(data);
+			if (load_msg != null){
+				var msg = load_msg;
+				load_msg = null;
+			} else{
+				var msg = 'Reloaded Data';
+			}
+			message_fade(msg, 2000);
+			S.$error.hide();
+			S.$save.prop('disabled', true);
 		}
-		handsontable_settings.columns = column_info.map(generate_column_info);
-		handsontable_settings.colHeaders = column_info.map(function(item){ return item.heading;});
-		
-		S.$inner_container.show();
-		S.$table.handsontable(handsontable_settings);
-		handsontable = S.$table.data('handsontable');
-		
-		original_data = _.cloneDeep(data);
-		handsontable.loadData(data);
-		if (load_msg != null){
-			var msg = load_msg;
-			load_msg = null;
-		} else{
-			var msg = 'Reloaded Data';
+		catch(err){
+			message_fade('Error occured while inserting data' , 0);
+			S.$error.text(err);
+			S.$error.show();
 		}
-		message_fade(msg, 2000);
-		S.$error.hide();
-		S.$save.prop('disabled', true);
 	}
 	
 	function ask_load(){
@@ -90,7 +104,7 @@ function HandsontableDisplay(S){
 		$('#prompt-do').one('click', msg_get_data);
 		$('#prompt').modal('show');
 	}
-		
+
 	function msg_get_data(){
 		message_fade('Reloading data from server...', 0);
 		get_data();
@@ -103,23 +117,23 @@ function HandsontableDisplay(S){
 			info.readOnly = true;
 		}
 		if (item.type == 'TextField'){
-			info.type = {renderer : long_renderer};
+			info.renderer = long_renderer;
 		}
 		else if (item.type == 'ForeignKey'){
-			info.type = {renderer: dropdown_renderer, editor: Handsontable.AutocompleteEditor};
+			info.type = 'dropdown';
 			info.source = item.fk_items;
 			info.strict = true;
 		}
 		else if (item.type == 'ManyToManyField'){
-			info.type = {renderer: M2M_renderer};
+			info.renderer = M2M_renderer;
 			info.readOnly = true;
 		}
 		else if (item.type == 'RelatedObject'){
-			info.type = {renderer: RelatedObject_renderer};
+			info.renderer = RelatedObject_renderer;
 			info.readOnly = true;
 		}
 		else if (_.has(item, 'choices')){
-			info.type = {renderer: dropdown_renderer, editor: Handsontable.AutocompleteEditor};
+			info.type = 'dropdown';
 			info.source = item.choices;
 			info.strict = true;
 		}
@@ -252,7 +266,8 @@ function HandsontableDisplay(S){
 					url: column.url,
 					filter_on: column.filter,
 					filter_value: handsontable.getDataAtRowProp(row, 'id'),
-					callback: msg_get_data
+					callback: msg_get_data,
+					height: $('#extra-table-big').find('.modal-body').height() - 50
 				};
 				// $('#btn-done').click(function(){$('#extra-table-big').modal('hide');});
 				var extra_table = new HandsontableDisplay(extra_table_settings);
@@ -425,10 +440,7 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 	var data = _.map(data_in, function(row){return [row];});
 
 	var columns = [{
-		type : {
-			renderer : dropdown_renderer,
-			editor : Handsontable.AutocompleteEditor
-		},
+		type : 'dropdown',
 		source : S.options,
 		strict : true
 	}]; 
@@ -462,11 +474,4 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 	function remove_row(row){
 		handsontable.alter("remove_row", row);
 	}
-}
-
-
-function dropdown_renderer(instance, td, row, col, prop, value, cellProperties) {
-	Handsontable.AutocompleteCell.renderer.apply(this, arguments);
-	// td.style.fontStyle = 'italic';
-	td.title = 'Type to show the list of options';
 }

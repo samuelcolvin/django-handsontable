@@ -3,6 +3,10 @@ import inspect, settings
 
 __version__ = '0.1'
 
+HOT_ID_IN_MODEL_STR = False
+if hasattr(settings, 'HOT_ID_IN_MODEL_STR'):
+    HOT_ID_IN_MODEL_STR = settings.HOT_ID_IN_MODEL_STR
+
 class _MetaBaseDisplayModel(type):
     def __init__(cls, *args, **kw):
         type.__init__(cls, *args, **kw)
@@ -30,7 +34,10 @@ class IDNameSerialiser(serializers.RelatedField):
             name = item.hot_name()
         else:
             name = str(item)
-        return '%d: %s' % (item.id, name)
+        if HOT_ID_IN_MODEL_STR:
+            return name
+        else:
+            return '%d: %s' % (item.id, name)
     
     def from_native(self, item):
         try:
@@ -53,7 +60,7 @@ class ChoiceSerialiser(serializers.Serializer):
     
 class ModelSerialiser(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
-        kwargs.pop('many', True)
+#         kwargs.pop('many', True)
         super(ModelSerialiser, self).__init__(*args, **kwargs)
 
 # class Serialiser(serializers.Serializer):

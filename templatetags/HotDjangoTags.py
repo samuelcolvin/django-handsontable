@@ -22,7 +22,8 @@ class HotTableNode(template.Node):
         app_name = self.app_name.resolve(context)
         model_name = self.model_name.resolve(context)
         url = reverse(rest_views.generate_reverse(app_name, model_name) + '-list')
-        return t.render(template.Context({'main_json_url': url}))
+        context['main_json_url'] = url
+        return t.render(template.Context(context))
     
 @register.simple_tag
 def hot_render_js():

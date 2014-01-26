@@ -1,3 +1,11 @@
+.main-container {
+	padding-bottom: 0;
+	overflow-y: hidden;
+}
+.start-hidden{
+	display: none;
+}
+
 .handsontable td {
 	max-width: 200px;
 }
@@ -36,8 +44,9 @@
 	margin-bottom: 20px;
 }
 
-.bodge-indent {
-	margin-left: 10px;
+.bodge-buttons {
+	margin-left: 27px;
+	margin-bottom: 10px;
 }
 
 .error-cell {
@@ -49,10 +58,21 @@
 	overflow: auto;
 }
 
-.msg-warning-row {
-	min-height: 75px;
-	margin-left: -4px;
+.msg-warning {
+	min-height: 60px;
 }
+
+#message, #extra-message, #error {
+	margin-bottom: 5px;
+}
+
+#error {
+	margin-top: 5px;
+}
+/*#table-btn-container{
+	position: relative;
+	top: -75px;
+}*/
 
 .big-modal {
 	width: 900px !important;

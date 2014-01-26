@@ -1,14 +1,18 @@
 <div id="main-table" class="col-xs-12">
-	<div class="row msg-warning-row">
-		<div id="message" class="alert alert-info">Loading...</div>
-		<pre id="error" class="alert alert-danger" style="display: none;"></pre>
-	</div>
-	<div id="table-btn-container" class="row" style="display: none;">
-		<div class="btn-group row padded-row bodge-indent">
-		  <button id="savebtn" class="btn btn-primary">Save Data</button>
-		  <button id="loadbtn" class="btn btn-default">Load Data from Server</button>
+	<div id="table-btn-container" class="row">
+		<div class="row">
+			<div class="msg-warning col-md-7 col-md-push-5">
+				<div id="message" class="alert alert-info">Loading...</div>
+				<pre id="error" class="alert alert-danger" style="display: none;"></pre>
+			</div>
+			<div class="col-md-5 col-md-pull-7">
+				<div class="btn-group bodge-buttons start-hidden">
+				  <button id="savebtn" class="btn btn-primary">Save Data</button>
+				  <button id="loadbtn" class="btn btn-default">Load Data from Server</button>
+				</div>
+			</div>
 		</div>
-		<div class="padded-row">
+		<div class="padded-row start-hidden">
 			<div id="hot-table" class="handsontable"></div>
 		</div>
 	</div>
@@ -21,12 +25,12 @@
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h4 class="modal-title">Secondary Table</h4>
         </div>
-        <div class="modal-body col-xs-12 table-modal">
-			<div class="row msg-warning-row">
+        <div class="modal-body table-modal">
+			<div class="row msg-warning">
 				<div id="extra-message" class="alert alert-info">Loading...</div>
 				<pre id="error" class="alert alert-danger" style="display: none;"></pre>
 			</div>
-			<div id="table-btn-container" class="row big-table">
+			<div class="start-hidden" class="row big-table">
 				<div id="hot-table" class="handsontable"></div>
 			</div>
         </div>

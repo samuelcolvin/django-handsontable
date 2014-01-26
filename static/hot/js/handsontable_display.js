@@ -31,11 +31,23 @@ $.ajaxSetup({
     }
 });
 
+$('#extra-table-big').on('show.bs.modal', function (e) {
+  $(this).find('.modal-body').height($(window).height()-300);
+});
+
+$('#extra-table-big').on('hidden.bs.modal', function (e) {
+  $(this).find('.start-hidden').hide();
+  $(this).find('#extra-message').show().text('Loading...');
+});
+
 var main_table_settings = {
 	table: '#main-table',
 	message: '#message',
-	url: main_json_url
+	url: main_json_url,
 };
 
 var main_table = new HandsontableDisplay(main_table_settings);
-$(document).ready(function() {main_table.load_table();});
+$(document).ready(function() {
+	main_table.set_height($(window).height() - $('#main-table').offset().top - 110);
+	main_table.load_table();
+});
