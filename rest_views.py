@@ -31,27 +31,10 @@ class ManyEnabledRouter(routers.DefaultRouter):
         name='{basename}-list',
         initkwargs={'suffix': 'List'}
     )
-    routes.insert(1, routers.Route(
-        url=r'^{prefix}/filter{trailing_slash}$',
-        mapping={
-            'get': 'filter',
-        },
-        name='{basename}-filter',
-        initkwargs={}
-    ))
 
 class ManyEnabledViewSet(viewsets.ModelViewSet):
     query = None      
     def list(self, request, *args, **kwargs):
-        query = dict(request.QUERY_PARAMS)
-        for k, v in query.items():
-            try: query[k] = int(v[0])
-            except: query[k] = v[0]
-#         print 'filter query:', query
-        self.query = query
-        return self._standard_list_headings(request, *args, **kwargs)
-        
-    def filter(self, request, *args, **kwargs):
         query = dict(request.QUERY_PARAMS)
         for k, v in query.items():
             try: query[k] = int(v[0])
