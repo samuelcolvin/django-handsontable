@@ -11,6 +11,7 @@ from django.db import models
 from django.core.urlresolvers import reverse
 from time import sleep
 from rest_framework.permissions import BasePermission
+import json
 
 class CustomIsAuthenticated(BasePermission):
     def has_permission(self, request, view):
@@ -20,7 +21,6 @@ class CustomIsAuthenticated(BasePermission):
 
 class ManyEnabledRouter(routers.DefaultRouter):
     routes = routers.DefaultRouter.routes
-    
     routes[0] = routers.Route(
         url=r'^{prefix}{trailing_slash}$',
         mapping={
@@ -31,13 +31,52 @@ class ManyEnabledRouter(routers.DefaultRouter):
         name='{basename}-list',
         initkwargs={'suffix': 'List'}
     )
+    routes.insert(1, routers.Route(
+        url=r'^{prefix}/filter{trailing_slash}$',
+        mapping={
+            'get': 'filter',
+        },
+        name='{basename}-filter',
+        initkwargs={}
+    ))
 
 class ManyEnabledViewSet(viewsets.ModelViewSet):
+    query = None      
     def list(self, request, *args, **kwargs):
+        query = dict(request.QUERY_PARAMS)
+        for k, v in query.items():
+            try: query[k] = int(v[0])
+            except: query[k] = v[0]
+#         print 'filter query:', query
+        self.query = query
+        return self._standard_list_headings(request, *args, **kwargs)
+        
+    def filter(self, request, *args, **kwargs):
+        query = dict(request.QUERY_PARAMS)
+        for k, v in query.items():
+            try: query[k] = int(v[0])
+            except: query[k] = v[0]
+#         print 'filter query:', query
+        self.query = query
+        return self._standard_list_headings(request, *args, **kwargs)
+        
+    def get_queryset(self):
+        if self.query and len(self.query) > 0:
+            q = self.model.objects.filter(**self.query)
+        else:
+            q = self.model.objects.all()
+        self.query = None
+        return q
+    
+    def _standard_list_headings(self, request, *args, **kwargs):
 #         sleep(1.5)
-        list_response = super(ManyEnabledViewSet, self).list(request, *args, **kwargs)
-        response_data = {'DATA': list_response.data, 'HEADINGS': self._get_info()}
-        return Response(response_data, status = list_response.status_code)
+        try:
+            list_response = super(ManyEnabledViewSet, self).list(request, *args, **kwargs)
+            response_data = {'DATA': list_response.data, 'HEADINGS': self._get_info()}
+        except Exception, e:
+            return self._repond_with_error(e)
+        else:
+            return Response(response_data, status = list_response.status_code)
     
     def update_add_delete_many(self, request, *args, **kwargs):
 #         sleep(1.5)
@@ -53,17 +92,20 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
                 print 'request.DATA:', self._all_data
                 raise Exception('request.DATA is not a dict')
         except Exception, e:
-            error_msg = {'STATUS': 'ERROR', 'error': str(e), 'type': type(e).__name__}
-            if hasattr(e, 'detail'):
-                error_msg['detail'] = e.detail
-            print error_msg
-            traceback.print_exc()
-            return Response(error_msg, status = status.HTTP_400_BAD_REQUEST)
+            return self._repond_with_error(e)
         else:
             if self._response_status in [status.HTTP_200_OK, status.HTTP_201_CREATED]:
-                return self.list(request)
+                return self.filter(request)
             else:
                 return Response(response_data, status = self._response_status)
+            
+    def _repond_with_error(self, e):
+        error_msg = {'STATUS': 'ERROR', 'error': str(e), 'type': type(e).__name__}
+        if hasattr(e, 'detail'):
+            error_msg['detail'] = e.detail
+        print error_msg
+        traceback.print_exc()
+        return Response(error_msg, status = status.HTTP_400_BAD_REQUEST)
         
     def _add_modify(self, *args, **kwargs):
         mod_data = self._all_data['MODIFY']
@@ -135,12 +177,10 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
         if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):
             mod = dj_field.rel.to
             field['fk_items'] = self._add_fk_model(mod)
-        elif isinstance(dj_field, models.related.RelatedObject):
-            if hasattr(dm, 'related_tables'):
-                mod = dj_field.model
-                other_disp_model = dm.related_tables[field_name]
-                field['url'] = reverse(generate_reverse(self._app_name, other_disp_model.__name__) + '-list')
-                field['filter'] = dj_field.field.name
+        elif isinstance(dj_field, models.related.RelatedObject) and hasattr(dm, 'related_tables'):
+            other_disp_model = dm.related_tables[field_name]
+            field['url'] = reverse(generate_reverse(self._app_name, other_disp_model.__name__) + '-list')
+            field['filter_on'] = dj_field.field.name
         elif hasattr(dj_field, 'choices') and len(dj_field.choices) > 0:
             field['choices'] = [choice[1] for choice in dj_field.choices]
         return field
@@ -160,9 +200,9 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
 
 def generate_viewsets():
     modelviewsets = []
-    for app_name, app in HotDjango.get_rest_apps().iteritems():
-        for model_name, disp_model in app.iteritems():
-            props={'queryset': disp_model.model.objects.all()}
+    for app_name, app in HotDjango.get_rest_apps().items():
+        for model_name, disp_model in app.items():
+            props={'model': disp_model.model}
             props['serializer_class'] = disp_model.HotTable
             props['_display_model'] = disp_model
             props['_app_name'] = app_name

@@ -1,5 +1,14 @@
 "use strict";
 
+function edit_related(field_name){
+	var info = extra_urls[field_name];
+	load_extra_hot_display(info.url, info.filter_on, info.filter_value, reload_page);
+}
+
+function reload_page(){
+	location.reload();
+}
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie != '') {
@@ -40,14 +49,16 @@ $('#extra-table-big').on('hidden.bs.modal', function (e) {
   $(this).find('#extra-message').show().text('Loading...');
 });
 
-var main_table_settings = {
-	table: '#main-table',
-	message: '#message',
-	url: main_json_url,
-};
-
-var main_table = new HandsontableDisplay(main_table_settings);
-$(document).ready(function() {
-	main_table.set_height($(window).height() - $('#main-table').offset().top - 110);
-	main_table.load_table();
-});
+if (typeof(main_json_url) != 'undefined'){
+	var main_table_settings = {
+		table: '#main-table',
+		message: '#message',
+		url: main_json_url,
+	};
+	
+	var main_table = new HandsontableDisplay(main_table_settings);
+	$(document).ready(function() {
+		main_table.set_height($(window).height() - $('#main-table').offset().top - 110);
+		main_table.load_table();
+	});
+}

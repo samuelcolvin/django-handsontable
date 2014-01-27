@@ -1,23 +1,3 @@
-<div id="main-table" class="col-xs-12">
-	<div id="table-btn-container" class="row">
-		<div class="row">
-			<div class="msg-warning col-md-7 col-md-push-5">
-				<div id="message" class="alert alert-info">Loading...</div>
-				<pre id="error" class="alert alert-danger" style="display: none;"></pre>
-			</div>
-			<div class="col-md-5 col-md-pull-7">
-				<div class="btn-group bodge-buttons start-hidden">
-				  <button id="savebtn" class="btn btn-primary">Save Data</button>
-				  <button id="loadbtn" class="btn btn-default">Load Data from Server</button>
-				</div>
-			</div>
-		</div>
-		<div class="padded-row start-hidden">
-			<div id="hot-table" class="handsontable"></div>
-		</div>
-	</div>
-</div>
-
 <div id="extra-table-big" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog big-modal">
       <div id="extra-table-big" class="modal-content">
@@ -85,7 +65,3 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{% csrf_token %}
-<script>
-	var main_json_url = "{{main_json_url|safe}}";
-</script>

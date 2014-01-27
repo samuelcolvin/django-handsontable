@@ -33,14 +33,15 @@ function HandsontableDisplay(S){
 	};
 
 	this.load_table = function() {
-		console.log('height',handsontable_settings.height);
+		// console.log('height',handsontable_settings.height);
 		load_msg = 'Loaded Data';
 		get_data();
 	};
 	
 	function get_data() {
+		var qurl = query_url(S.url);
 		$.ajax({
-			url : S.url,
+			url : qurl,
 			dataType : 'json',
 			type : 'GET',
 			success : insert_data,
@@ -57,6 +58,14 @@ function HandsontableDisplay(S){
 		}
 	}
 	
+	function query_url(url){
+		var qurl = url;
+		if (_.has(S, 'filter_on')){
+			qurl += '?' + S.filter_on + '__id=' + S.filter_value;
+		}
+		return qurl;
+	}
+	
 	var load_msg;
 	function insert_data(data_headings) {
 		try{
@@ -67,7 +76,7 @@ function HandsontableDisplay(S){
 			original_max_id = max_id;
 			if (_.has(S, 'filter_on')){
 				_.remove(column_info, function(col){ return col.name == S.filter_on;});
-				data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
+				// data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
 			}
 			handsontable_settings.columns = column_info.map(generate_column_info);
 			handsontable_settings.colHeaders = column_info.map(function(item){ return item.heading;});
@@ -258,21 +267,8 @@ function HandsontableDisplay(S){
 				var second_table = new SimpleHandsontableDisplay(second_table_settings, data, extra_small_table_callback);
 			});
 		} else if(column.type == 'RelatedObject'){
-			$('#extra-table-big').modal('show');
-			$('#extra-table-big').on('shown.bs.modal', function(){
-				var extra_table_settings = {
-					table: '#extra-table-big',
-					message: '#extra-message',
-					url: column.url,
-					filter_on: column.filter,
-					filter_value: handsontable.getDataAtRowProp(row, 'id'),
-					callback: msg_get_data,
-					height: $('#extra-table-big').find('.modal-body').height() - 50
-				};
-				// $('#btn-done').click(function(){$('#extra-table-big').modal('hide');});
-				var extra_table = new HandsontableDisplay(extra_table_settings);
-				extra_table.load_table();
-			});
+			var filter_value = handsontable.getDataAtRowProp(row, 'id');
+			load_extra_hot_display(column.url, column.filter_on, filter_value, msg_get_data);
 		}
 	
 		function extra_small_table_callback(row, col, data){
@@ -359,7 +355,7 @@ function HandsontableDisplay(S){
 			message_fade('Saving ' + (changed.length + deleted.length) + ' changes to the server....', 0);
 			var to_send = JSON.stringify({'MODIFY': changed, 'DELETE': deleted});
 			$.ajax({
-				url : S.url,
+				url : query_url(S.url),
 				contentType: 'application/json',
 				dataType: 'json',
 				type: 'PATCH',
@@ -430,6 +426,23 @@ function HandsontableDisplay(S){
 			$(cell).addClass('error-cell');
 		}
 	}
+}
+
+function load_extra_hot_display(url, filter_on, filter_value, callback){
+	$('#extra-table-big').modal('show');
+	$('#extra-table-big').on('shown.bs.modal', function(){
+		var extra_table_settings = {
+			table: '#extra-table-big',
+			message: '#extra-message',
+			url: url,
+			filter_on: filter_on,
+			filter_value: filter_value,
+			callback: callback,
+			height: $('#extra-table-big').find('.modal-body').height() - 50
+		};
+		var extra_table = new HandsontableDisplay(extra_table_settings);
+		extra_table.load_table();
+	});
 }
 
 function SimpleHandsontableDisplay(S, data_in, callback){
