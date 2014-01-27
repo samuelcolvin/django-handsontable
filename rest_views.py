@@ -36,15 +36,16 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     query = None      
     def list(self, request, *args, **kwargs):
         query = dict(request.QUERY_PARAMS)
-        for k, v in query.items():
-            try: query[k] = int(v[0])
-            except: query[k] = v[0]
-#         print 'filter query:', query
-        self.query = query
+        if len(query) > 0:
+            for k, v in query.items():
+                try: query[k] = int(v[0])
+                except: query[k] = v[0]
+#             print 'filter query:', query
+            self.query = query
         return self._standard_list_headings(request, *args, **kwargs)
         
     def get_queryset(self):
-        if self.query and len(self.query) > 0:
+        if self.query:
             q = self.model.objects.filter(**self.query)
         else:
             q = self.model.objects.all()
@@ -78,7 +79,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
             return self._repond_with_error(e)
         else:
             if self._response_status in [status.HTTP_200_OK, status.HTTP_201_CREATED]:
-                return self.filter(request)
+                return self.list(request)
             else:
                 return Response(response_data, status = self._response_status)
             
@@ -151,10 +152,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     def _get_field_info(self, field_name):
         dm = self._display_model
         dj_field = dm.model._meta.get_field_by_name(field_name)[0]
-        if hasattr(dj_field, 'verbose_name'):
-            verb_name = dj_field.verbose_name
-        else:
-            verb_name = field_name
+        verb_name = HotDjango.get_verbose_name(dm, field_name)
         field = {'heading': verb_name, 'name': field_name}
         field['type'] = dj_field.__class__.__name__
         if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):

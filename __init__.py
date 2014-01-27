@@ -22,6 +22,7 @@ class _MetaBaseDisplayModel(type):
 
 class BaseDisplayModel:
     __metaclass__ = _MetaBaseDisplayModel
+    verbose_names = {}
 
 class IDNameSerialiser(serializers.RelatedField):
     read_only = False
@@ -63,10 +64,13 @@ class ModelSerialiser(serializers.ModelSerializer):
 #         kwargs.pop('many', True)
         super(ModelSerialiser, self).__init__(*args, **kwargs)
 
-# class Serialiser(serializers.Serializer):
-#     def __init__(self, *args, **kwargs):
-#         kwargs.pop('many', True)
-#         super(Serialiser, self).__init__(*args, **kwargs)
+def get_verbose_name(dm, field_name):
+    dj_field = dm.model._meta.get_field_by_name(field_name)[0]
+    if hasattr(dj_field, 'verbose_name'):
+        return dj_field.verbose_name
+    elif field_name in dm.verbose_names:
+        return dm.verbose_names[field_name]
+    return field_name
 
 def get_all_apps():
     importer = lambda m: __import__(m, globals(), locals(), ['display'], -1)
