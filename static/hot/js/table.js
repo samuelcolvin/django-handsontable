@@ -252,27 +252,19 @@ function HandsontableDisplay(S){
 	
 	function load_extra_table(row, prop){
 		var column = _.find(column_info, {name:prop});
+		var main_row = row;
+		var main_col = prop;
 		if (column.type == 'ManyToManyField'){
-			$('#extra-table').modal('show');
-			$('#extra-table').on('shown.bs.modal', function(){
-				var second_table_settings = {
-					table: '#extra-table',
-					height: 300,
-					row: row,
-					prop: prop,
-					heading: _.find(column_info, {name: prop}).heading,
-					options: column.fk_items
-				};
-				var data = handsontable.getDataAtRowProp(row, prop);
-				var second_table = new SimpleHandsontableDisplay(second_table_settings, data, extra_small_table_callback);
-			});
+			var data = handsontable.getDataAtRowProp(row, prop);
+			var headings = _.find(column_info, {name: prop}).heading;
+			load_simple_hot_display(headings, column.fk_items, data, extra_small_table_callback);
 		} else if(column.type == 'RelatedObject'){
 			var filter_value = handsontable.getDataAtRowProp(row, 'id');
 			load_extra_hot_display(column.url, column.filter_on, filter_value, msg_get_data);
 		}
 	
-		function extra_small_table_callback(row, col, data){
-			handsontable.setDataAtRowProp(row, col, data, 'ignore');
+		function extra_small_table_callback(data){
+			handsontable.setDataAtRowProp(main_row, main_col, data, 'ignore');
 			S.$save.prop('disabled', false);
 			message_fade('Save Required', 2000);
 		}
@@ -445,6 +437,19 @@ function load_extra_hot_display(url, filter_on, filter_value, callback){
 	});
 }
 
+function load_simple_hot_display(heading, options, data, callback){
+	$('#extra-table').modal('show');
+	$('#extra-table').on('shown.bs.modal', function(){
+		var second_t = {
+			table: '#extra-table',
+			height: 300,
+			options: options,
+			heading: heading,
+		};
+		var second_table = new SimpleHandsontableDisplay(second_t, data, callback);
+	});
+}
+
 function SimpleHandsontableDisplay(S, data_in, callback){
 	var max_id, original_data;
 	S.$table_container = $(S.table);
@@ -469,9 +474,8 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 		minSpareRows: 1,
 		removeRowPlugin: remove_row,
 	};
-	
-	if (_.has(S, 'height'))
-		handsontable_settings.height = S.height;
+
+	handsontable_settings.height = S.height;
 	
 	S.$table.handsontable(handsontable_settings);
 	handsontable = S.$table.data('handsontable');
@@ -481,7 +485,7 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 	
 	function done(){
 		var data_out = _.compact(_.map(handsontable.getData(), function(row){return row[0];}));
-		callback(S.row, S.prop, data_out);
+		callback(data_out);
 	}
 	
 	function remove_row(row){

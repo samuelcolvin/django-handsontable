@@ -5,7 +5,46 @@ function edit_related(field_name){
 	load_extra_hot_display(info.url, info.filter_on, info.filter_value, reload_page);
 }
 
-function reload_page(){
+function edit_m2m(field_name){
+	var info = extra_urls[field_name];
+	$.ajax({
+		url : field_url(info.url),
+		dataType : 'json',
+		type : 'GET',
+		success : insert_data,
+		error: process_errors,
+	});
+	
+	function insert_data(return_data){
+		load_simple_hot_display(info.field, return_data.options, return_data.values, simple_callback);
+	}
+
+	function simple_callback(data_back){
+		console.log(data_back);
+		console.log(info.update_url);
+		$.ajax({
+			url : field_url(info.update_url),
+			contentType: 'application/json',
+			dataType: 'json',
+			type: 'POST',
+			data: JSON.stringify(data_back),
+			success: reload_page,
+			error: process_errors,
+		});
+	}
+	
+	function field_url(url){
+		return url + '?field=' + info.field;
+	}
+		
+	function process_errors(jqXHR, status, error_msg){
+		console.log('ERROR occurred: ' + error_msg);
+		var response = JSON.parse(jqXHR.responseText);
+		console.log(response);
+	}
+}
+
+function reload_page(response){
 	location.reload();
 }
 

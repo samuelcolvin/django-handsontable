@@ -5,6 +5,7 @@ import settings
 import rest_framework.routers as routers
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action, link
 from django.http import Http404
 import traceback
 from django.db import models
@@ -12,6 +13,7 @@ from django.core.urlresolvers import reverse
 from time import sleep
 from rest_framework.permissions import BasePermission
 import json
+from rest_framework.reverse import reverse as rest_reverse
 
 class CustomIsAuthenticated(BasePermission):
     def has_permission(self, request, view):
@@ -51,6 +53,40 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
             q = self.model.objects.all()
         self.query = None
         return q
+    
+    @link()
+    def getm2m(self, request, pk, *args, **kwargs):
+        if 'field' not in request.QUERY_PARAMS:
+            return self._repond_with_error(Exception('field must be specified as get param'))
+        try:
+            self._m2m_field = request.QUERY_PARAMS['field']
+            dj_field = self.model._meta.get_field_by_name(self._m2m_field)[0]
+            assert isinstance(dj_field, models.ManyToManyField), \
+                    "field '%s' is not a ManyToManyField" % self._m2m_field
+            response = {'options': self._add_fk_model(dj_field.rel.to)}
+            items = getattr(self.model.objects.get(pk=pk), self._m2m_field).all()
+            response['values'] = [self._get_id_name(item) for item in items]
+        except Exception, e:
+            return self._repond_with_error(e)
+        return Response(response, status = status.HTTP_200_OK)
+    
+    @action()
+    def setm2m(self, request, pk, *args, **kwargs):
+        response = self.getm2m(request, pk, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            try:
+#                 print request.DATA
+                ids = [int(i.split(':')[0]) for i in request.DATA]
+                item = self.model.objects.get(pk=pk)
+                m2m_field = getattr(item, self._m2m_field)
+                m2m_field.clear()
+                for item_id in ids:
+                    m2m_field.add(item_id)
+                item.save()
+            except Exception, e:
+                return self._repond_with_error(e)
+        return response
+        
     
     def _standard_list_headings(self, request, *args, **kwargs):
 #         sleep(1.5)
