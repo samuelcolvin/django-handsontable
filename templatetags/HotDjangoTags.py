@@ -54,10 +54,11 @@ class HotTableExtraNode(template.Node):
         for field_name in field_names:
             dj_field = dm.model._meta.get_field_by_name(field_name)[0]
             extra_urls[field_name] = {}
+            extra_urls[field_name]['heading'] = HotDjango.get_verbose_name(dm, field_name) 
             if isinstance(dj_field, models.ManyToManyField):
                 other_model_name = dj_field.rel.to.__name__
                 extra_urls[field_name]['field'] = field_name
-                extra_urls[field_name]['url'] = reverse(rest_views.generate_reverse(app_name, model_name)\
+                url = reverse(rest_views.generate_reverse(app_name, model_name)\
                                                          + '-getm2m',  kwargs={'pk': this_id})
                 extra_urls[field_name]['update_url'] = reverse(rest_views.generate_reverse(app_name, model_name)\
                                                          + '-setm2m',  kwargs={'pk': this_id})
@@ -66,7 +67,7 @@ class HotTableExtraNode(template.Node):
                 extra_urls[field_name]['filter_on'] = dj_field.field.name
                 extra_urls[field_name]['filter_value'] = this_id
                 url = reverse(rest_views.generate_reverse(app_name, other_model_name) + '-list')
-                extra_urls[field_name]['url'] = url
+            extra_urls[field_name]['url'] = url
         context['extra_urls'] = json.dumps(extra_urls)
         return t.render(template.Context(context))
 

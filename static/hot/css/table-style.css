@@ -1,7 +1,3 @@
-.main-container {
-	padding-bottom: 0;
-	overflow-y: hidden;
-}
 .start-hidden{
 	display: none;
 }
@@ -33,11 +29,11 @@
 }
 
 #log .null {
-	color: magenta;
+	color: #F0F;
 }
 
 #log .key {
-	color: grey;
+	color: #888;
 }
 
 .padded-row {

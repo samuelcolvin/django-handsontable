@@ -60,9 +60,11 @@ class ChoiceSerialiser(serializers.Serializer):
         return next(choice[0] for choice in self._choices if choice[1] == item)
     
 class ModelSerialiser(serializers.ModelSerializer):
-    def __init__(self, *args, **kwargs):
-#         kwargs.pop('many', True)
-        super(ModelSerialiser, self).__init__(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if hasattr(self.object, 'hotsave_enabled') and self.object.hotsave_enabled:
+            kwargs['hotsave'] = True
+        super(ModelSerialiser, self).save(*args, **kwargs)
+
 
 def get_verbose_name(dm, field_name):
     dj_field = dm.model._meta.get_field_by_name(field_name)[0]

@@ -2,7 +2,7 @@
 
 function edit_related(field_name){
 	var info = extra_urls[field_name];
-	load_extra_hot_display(info.url, info.filter_on, info.filter_value, reload_page);
+	load_extra_hot_display(info.heading, info.url, info.filter_on, info.filter_value, reload_page);
 }
 
 function edit_m2m(field_name){
@@ -16,7 +16,7 @@ function edit_m2m(field_name){
 	});
 	
 	function insert_data(return_data){
-		load_simple_hot_display(info.field, return_data.options, return_data.values, simple_callback);
+		load_simple_hot_display(info.heading, return_data.options, return_data.values, simple_callback);
 	}
 
 	function simple_callback(data_back){
@@ -28,7 +28,7 @@ function edit_m2m(field_name){
 			dataType: 'json',
 			type: 'POST',
 			data: JSON.stringify(data_back),
-			success: reload_page,
+			success: reload_page_log,
 			error: process_errors,
 		});
 	}
@@ -38,15 +38,31 @@ function edit_m2m(field_name){
 	}
 		
 	function process_errors(jqXHR, status, error_msg){
-		console.log('ERROR occurred: ' + error_msg);
-		var response = JSON.parse(jqXHR.responseText);
-		console.log(response);
+		$('.alert-danger').show();
+		$('.alert-danger').html('<p>ERROR occurred: ' + error_msg + '</p>');
+		$('.alert-danger').append('<p>' + jqXHR.responseText + '</p>');
 	}
 }
 
-function reload_page(response){
+function reload_page(){
 	location.reload();
 }
+
+function reload_page_log(response_json){
+	console.log(response_json);
+	localStorage['response'] = response_json;
+	location.reload();
+}
+
+$(document).ready(function() {
+	if (localStorage.hasOwnProperty('response')){
+		console.log(localStorage['response']);
+		var response = JSON.parse(localStorage['response']);
+		localStorage.removeItem('response');
+		$('.alert-success').show();
+		$('.alert-success').html('<p>' + response.message + '</p>');
+	}
+});
 
 function getCookie(name) {
     var cookieValue = null;

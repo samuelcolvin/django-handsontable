@@ -13,7 +13,6 @@ from django.core.urlresolvers import reverse
 from time import sleep
 from rest_framework.permissions import BasePermission
 import json
-from rest_framework.reverse import reverse as rest_reverse
 
 class CustomIsAuthenticated(BasePermission):
     def has_permission(self, request, view):
@@ -42,7 +41,6 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
             for k, v in query.items():
                 try: query[k] = int(v[0])
                 except: query[k] = v[0]
-#             print 'filter query:', query
             self.query = query
         return self._standard_list_headings(request, *args, **kwargs)
         
@@ -72,27 +70,36 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
     
     @action()
     def setm2m(self, request, pk, *args, **kwargs):
+#         return self._repond_with_error(Exception('Random error'))
         response = self.getm2m(request, pk, *args, **kwargs)
-        if response.status_code == status.HTTP_200_OK:
-            try:
-#                 print request.DATA
-                ids = [int(i.split(':')[0]) for i in request.DATA]
-                item = self.model.objects.get(pk=pk)
-                m2m_field = getattr(item, self._m2m_field)
-                m2m_field.clear()
-                for item_id in ids:
-                    m2m_field.add(item_id)
-                item.save()
-            except Exception, e:
-                return self._repond_with_error(e)
-        return response
+        if response.status_code != status.HTTP_200_OK:
+            return response
+        try:
+#             print request.DATA
+            ids = [int(i.split(':')[0]) for i in request.DATA]
+            item = self.model.objects.get(pk=pk)
+            m2m_field = getattr(item, self._m2m_field)
+            m2m_field.clear()
+            for item_id in ids:
+                m2m_field.add(item_id)
+            item.save()
+            if hasattr(self.model, 'after_save'):
+                self.model.after_save()
+        except Exception, e:
+            return self._repond_with_error(e)
+        else:
+            response = {'message': '%s updated' % self.model._meta.verbose_name}
+            return Response(json.dumps(response), status = status.HTTP_200_OK)
         
     
     def _standard_list_headings(self, request, *args, **kwargs):
 #         sleep(1.5)
         try:
             list_response = super(ManyEnabledViewSet, self).list(request, *args, **kwargs)
-            response_data = {'DATA': list_response.data, 'HEADINGS': self._get_info()}
+            add_delete = getattr(self._display_model.HotTable.Meta, 'add_delete', True)
+            response_data = {'DATA': list_response.data, 
+                             'HEADINGS': self._get_info(),
+                             'SETTINGS':{'add_delete': add_delete}}
         except Exception, e:
             return self._repond_with_error(e)
         else:
@@ -106,8 +113,12 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
             if isinstance(self._all_data, dict):
                 response_data = {}
                 self._response_status = status.HTTP_200_OK
+                self._all_ids = self.model.objects.all().values_list('id', flat=True)
                 response_data['DELETED'] = self._delete(*args, **kwargs)
-                response_data['MODIFIED'] = self._add_modify(*args, **kwargs)
+                response_data['ADDED'] = self._add_modify('ADD', *args, **kwargs)
+                response_data['MODIFIED'] = self._add_modify('MODIFY', *args, **kwargs)
+                if hasattr(self.model, 'after_save'):
+                    self.model.after_save()
             else:
                 print 'request.DATA:', self._all_data
                 raise Exception('request.DATA is not a dict')
@@ -118,34 +129,28 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
                 return self.list(request)
             else:
                 return Response(response_data, status = self._response_status)
-            
-    def _repond_with_error(self, e):
-        error_msg = {'STATUS': 'ERROR', 'error': str(e), 'type': type(e).__name__}
-        if hasattr(e, 'detail'):
-            error_msg['detail'] = e.detail
-        print error_msg
-        traceback.print_exc()
-        return Response(error_msg, status = status.HTTP_400_BAD_REQUEST)
-        
-    def _add_modify(self, *args, **kwargs):
-        mod_data = self._all_data['MODIFY']
-        if not isinstance(mod_data, list):
-            print 'request.DATA:', self._all_data
-            raise Exception('MODIFY DATA is not a list')
+    
+    def _add_modify(self, action, *args, **kwargs):
+        data = self._all_data[action]
+        if not isinstance(data, list):
+            raise Exception('%s DATA is not a list' % action)
         response_data = {'STATUS': 'SUCCESS', 'IDS': {}}
-        for data_item in mod_data:
+        for data_item in data:
             if data_item['id'] is None:
                 response_data['IDS']['unknown'] = {'data': 'ID is blank: ' + str(data_item), 
                                                    'status': status.HTTP_400_BAD_REQUEST}
                 response_data['STATUS'] = 'PARTIAL ERROR'
                 continue
             self._base_request._data = data_item
-            self.kwargs[self.pk_url_kwarg] = data_item['id']
-            if self._check_object_exists():
+            id_before = data_item['id']
+            if action == 'MODIFY':
+                self.kwargs[self.pk_url_kwarg] = data_item['id']
                 response = self.partial_update(self._base_request, *args, **kwargs)
             else:
+                del self._base_request._data['id']
+                self.kwargs[self.pk_url_kwarg] = None
                 response = self.create(self._base_request, *args, **kwargs)
-            response_data['IDS'][data_item['id']] = {'status': response.status_code}
+            response_data['IDS'][id_before] = {'status': response.status_code}
             if response.status_code is status.HTTP_201_CREATED and self._response_status is status.HTTP_200_OK:
                 self._response_status = status.HTTP_201_CREATED
             if response.status_code not in (status.HTTP_200_OK, status.HTTP_201_CREATED):
@@ -162,7 +167,7 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
         response_data = {'STATUS': 'SUCCESS', 'IDS': {}}
         for item_id in ids2delete:
             self.kwargs[self.pk_url_kwarg] = item_id
-            if self._check_object_exists():
+            if item_id in self._all_ids:
                 response = self.destroy(self._base_request, *args, **kwargs)
                 response_data['IDS'][item_id] = {'status': response.status_code}
             else:
@@ -170,26 +175,28 @@ class ManyEnabledViewSet(viewsets.ModelViewSet):
                 self._response_status = status.HTTP_404_NOT_FOUND
                 response_data['STATUS'] = 'PARTIAL ERROR'
         return response_data
-
-    def _check_object_exists(self):
-        try:
-            self.get_object()
-            return True
-        except Http404:
-            return False
+            
+    def _repond_with_error(self, e):
+        error_msg = {'STATUS': 'ERROR', 'error': str(e), 'type': type(e).__name__}
+        if hasattr(e, 'detail'):
+            error_msg['detail'] = e.detail
+        print error_msg
+        traceback.print_exc()
+        return Response(error_msg, status = status.HTTP_400_BAD_REQUEST)
     
     def _get_info(self):
         fields = []
         self._all_apps = HotDjango.get_rest_apps()
+        readonly = getattr(self._display_model.HotTable.Meta, 'readonly', [])
         for field_name in self._display_model.HotTable.Meta.fields:
-            fields.append(self._get_field_info(field_name))
+            fields.append(self._get_field_info(field_name, field_name in readonly))
         return fields
     
-    def _get_field_info(self, field_name):
+    def _get_field_info(self, field_name, readonly):
         dm = self._display_model
         dj_field = dm.model._meta.get_field_by_name(field_name)[0]
         verb_name = HotDjango.get_verbose_name(dm, field_name)
-        field = {'heading': verb_name, 'name': field_name}
+        field = {'heading': verb_name, 'name': field_name, 'readonly': readonly or field_name == 'id'}
         field['type'] = dj_field.__class__.__name__
         if isinstance(dj_field, models.ForeignKey) or isinstance(dj_field, models.ManyToManyField):
             mod = dj_field.rel.to

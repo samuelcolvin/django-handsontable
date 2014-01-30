@@ -16,11 +16,9 @@ function HandsontableDisplay(S){
 	
 	var handsontable_settings = {
 		contextMenu: false,
-		minSpareRows: 5,
 		stretchH: 'all',
 		beforeChange: b4change,
 		afterChange: changed,
-		removeRowPlugin: remove_row,
 	  	onSelection: on_select,
 		height: 700,
 	};
@@ -70,6 +68,7 @@ function HandsontableDisplay(S){
 	function insert_data(data_headings) {
 		try{
 			column_info = data_headings.HEADINGS;
+			var add_delete = data_headings.SETTINGS.add_delete;
 			var data = data_headings.DATA;
 			max_id = _.max(data, 'id').id;
 			if (_.isUndefined(max_id)) max_id=0;
@@ -78,6 +77,12 @@ function HandsontableDisplay(S){
 				_.remove(column_info, function(col){ return col.name == S.filter_on;});
 				// data = _.filter(data, function(row){return row[S.filter_on] == S.filter_value;});
 			}
+			
+			if (add_delete){
+				handsontable_settings.removeRowPlugin = remove_row;
+				handsontable_settings.minSpareRows = 5;
+			}
+
 			handsontable_settings.columns = column_info.map(generate_column_info);
 			handsontable_settings.colHeaders = column_info.map(function(item){ return item.heading;});
 			
@@ -115,6 +120,7 @@ function HandsontableDisplay(S){
 	}
 
 	function msg_get_data(){
+		$('#prompt').modal('hide');
 		message_fade('Reloading data from server...', 0);
 		get_data();
 	}
@@ -122,9 +128,7 @@ function HandsontableDisplay(S){
 	function generate_column_info(item){
 		var info = {};
 		info.data = item.name;
-		if (item.name == 'id'){
-			info.readOnly = true;
-		}
+		info.readOnly = item.readonly;
 		if (item.type == 'TextField'){
 			info.renderer = long_renderer;
 		}
@@ -260,7 +264,7 @@ function HandsontableDisplay(S){
 			load_simple_hot_display(headings, column.fk_items, data, extra_small_table_callback);
 		} else if(column.type == 'RelatedObject'){
 			var filter_value = handsontable.getDataAtRowProp(row, 'id');
-			load_extra_hot_display(column.url, column.filter_on, filter_value, msg_get_data);
+			load_extra_hot_display(column.heading, column.url, column.filter_on, filter_value, msg_get_data);
 		}
 	
 		function extra_small_table_callback(data){
@@ -297,14 +301,12 @@ function HandsontableDisplay(S){
 	    _.remove(deleted, function(id){ 
 	    	return _.findIndex(all, function(row){return id == row.id;}) != -1;
 	    });
-	    // set added to all the changed rows' id
-	    var added = _.pluck(changed, 'id');
-		// remove all existing ids
-	    _.remove(added, function(id){ 
-	    	return _.findIndex(original_data, function(row){return id == row.id;}) != -1;
+	    // take the added rows out of changed and put them in added
+	    var added = _.remove(changed, function(row){ 
+	    	return _.findIndex(original_data, function(orig_row){return row.id == orig_row.id;}) == -1;
 	    });
 		
-		if (changed.length == 0 && deleted.length == 0){
+		if (changed.length == 0 && deleted.length == 0 && added.length == 0){
 			message_fade('Nothing to Save', 2000);
 			S.$save.prop('disabled', true);
 			S.$error.hide();
@@ -345,7 +347,7 @@ function HandsontableDisplay(S){
 		function modify_delete(){
 			cancelling = false;
 			message_fade('Saving ' + (changed.length + deleted.length) + ' changes to the server....', 0);
-			var to_send = JSON.stringify({'MODIFY': changed, 'DELETE': deleted});
+			var to_send = JSON.stringify({'ADD': added, 'MODIFY': changed, 'DELETE': deleted});
 			$.ajax({
 				url : query_url(S.url),
 				contentType: 'application/json',
@@ -420,7 +422,8 @@ function HandsontableDisplay(S){
 	}
 }
 
-function load_extra_hot_display(url, filter_on, filter_value, callback){
+function load_extra_hot_display(title, url, filter_on, filter_value, callback){
+	$('#extra-table-big').find('.modal-title').text(title);
 	$('#extra-table-big').modal('show');
 	$('#extra-table-big').on('shown.bs.modal', function(){
 		var extra_table_settings = {
@@ -480,11 +483,13 @@ function SimpleHandsontableDisplay(S, data_in, callback){
 	S.$table.handsontable(handsontable_settings);
 	handsontable = S.$table.data('handsontable');
 	
-	$(S.table).on('hidden.bs.modal',  done);
+	// $(S.table).on('hidden.bs.modal',  done);
+	S.$table_container.find('#done').click(done);
 	S.$table_container.show();
 	
 	function done(){
 		var data_out = _.compact(_.map(handsontable.getData(), function(row){return row[0];}));
+		console.log('callback');
 		callback(data_out);
 	}
 	
