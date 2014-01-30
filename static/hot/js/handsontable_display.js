@@ -117,3 +117,12 @@ if (typeof(main_json_url) != 'undefined'){
 		main_table.load_table();
 	});
 }
+
+$(document).ready(function () {
+    $('#extra-table-big').on('shown.bs.modal', function() {
+        $(document).off('focusin.bs.modal');
+    });
+    $('#extra-table').on('shown.bs.modal', function() {
+        $(document).off('focusin.bs.modal');
+    });
+});

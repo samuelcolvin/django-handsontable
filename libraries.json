@@ -13,5 +13,10 @@
   "https://raw2.github.com/adamwdraper/Numeral-js/1.5.3/min/languages.min.js": "static/lib/js/languages.min.js",
   "https://raw2.github.com/adamwdraper/Numeral-js/1.5.3/min/numeral.min.js": "static/lib/js/numeral.min.js",
   "https://raw2.github.com/lodash/lodash/2.4.1/dist/lodash.js": "static/lib/js/lodash.js",
-  "https://raw2.github.com/lodash/lodash/2.4.1/dist/lodash.min.js": "static/lib/js/lodash.min.js"
+  "https://raw2.github.com/lodash/lodash/2.4.1/dist/lodash.min.js": "static/lib/js/lodash.min.js",
+  "https://raw.github.com/novus/nvd3/v1.1.15b/nv.d3.min.css": "static/lib/css/nv.d3.min.css",
+  "https://raw.github.com/mbostock/d3/v3.1.5/d3.js": "static/lib/js/d3.v3.js",
+  "https://raw.github.com/mbostock/d3/v3.1.5/d3.min.js": "static/lib/js/d3.v3.min.js",
+  "https://raw.github.com/novus/nvd3/v1.1.15b/nv.d3.js": "static/lib/js/nv.d3.js",
+  "https://raw.github.com/novus/nvd3/v1.1.15b/nv.d3.min.js": "static/lib/js/nv.d3.min.js"
 }

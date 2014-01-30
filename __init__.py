@@ -78,18 +78,21 @@ def get_all_apps():
     importer = lambda m: __import__(m, globals(), locals(), ['display'], -1)
     display_modules = map(importer, settings.DISPLAY_APPS)
     apps={}
+    extra_render = None
     for app in display_modules:
         app_name = app.display.app_name
         apps[app_name] = {}
+        if extra_render == None:
+            extra_render = getattr(app.display, 'extra_render', None)
         for ob_name in dir(app.display):
             ob = getattr(app.display, ob_name)
             if inherits_from(ob, 'BaseDisplayModel'):
                 apps[app_name][ob_name] = ob
                 apps[app_name][ob_name]._app_name = app_name
-    return apps
+    return apps, extra_render
 
 def get_rest_apps():
-    display_apps = get_all_apps()
+    display_apps, _ = get_all_apps()
     for disp_app in display_apps.values():
         for model_name in disp_app.keys():
             if not hasattr(disp_app[model_name], 'HotTable'):
